@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 
-function ShareContent({ item, photoUrls, initialImageUrl }: { item: any; photoUrls: string[]; initialImageUrl: string }) {
-  const [activeImage, setActiveImage] = useState(initialImageUrl);
+export default function GarageItemView({ item, photoUrls }: { item: any; photoUrls: string[] }) {
+  const initialImage = item.imageUrl || (photoUrls.length > 0 ? photoUrls[0] : '');
+  const [activeImage, setActiveImage] = useState(initialImage);
 
   return (
     <main className="min-h-screen bg-[#0F172A] text-slate-100 py-8 px-4 sm:px-6">

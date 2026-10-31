@@ -3,7 +3,7 @@ import { db } from '@/lib/firebase';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { connection } from 'next/server';
-import ClientShareView from './client_view'; // または下記コンポーネント
+import GarageItemView from './GarageItemView';
 
 export const instant = false;
 
@@ -65,7 +65,6 @@ export default async function SharePage({ params }: Props) {
   }
 
   const photoUrls: string[] = item.photoUrls ?? (item.imageUrl ? [item.imageUrl] : []);
-  const initialImageUrl = item.imageUrl || (photoUrls.length > 0 ? photoUrls[0] : '');
 
-  return <ShareContent item={item} photoUrls={photoUrls} initialImageUrl={initialImageUrl} />;
+  return <GarageItemView item={item} photoUrls={photoUrls} />;
 }
