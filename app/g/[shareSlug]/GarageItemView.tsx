@@ -12,7 +12,7 @@ export default function GarageItemView({ item, photoUrls }: { item: any; photoUr
         
         {/* ヘッダーブランド */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <span className="text-xs font-bold text-amber-400 tracking-wider">TSUMI-PULA ARCHIVE</span>
+          <span className="text-xs font-bold text-amber-400 tracking-wider">GUNPLA ARCHIVE</span>
           <span className="text-xs text-slate-400">積みプラ管理アプリ</span>
         </div>
 
