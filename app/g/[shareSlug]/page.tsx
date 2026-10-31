@@ -68,3 +68,12 @@ export default async function SharePage({ params }: Props) {
 
   return <GarageItemView item={item} photoUrls={photoUrls} />;
 }
+
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  // ★ metadataBase に新ドメインを設定
+  metadataBase: new URL('https://gunpla-archive.jp'),
+  title: 'GUNPLA ARCHIVE',
+  description: 'ガンプラ・プラモデルの製作記録・ガレージ管理アプリ',
+};
