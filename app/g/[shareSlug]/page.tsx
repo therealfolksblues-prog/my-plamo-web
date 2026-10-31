@@ -3,6 +3,8 @@ import { db } from '@/lib/firebase';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ shareSlug: string }>;
 }
