@@ -2,10 +2,10 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import { connection } from 'next/server'; // ★ 追加
+import { connection } from 'next/server';
 
-// ★ 以下の1行を削除してください
-// export const dynamic = 'force-dynamic';
+// ★ 追加：動的データ取得によるプリレンダリングのブロッキング動作を許可
+export const instant = false;
 
 interface Props {
   params: Promise<{ shareSlug: string }>;
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function SharePage({ params }: Props) {
-  await connection(); // ★ 追加（リクエスト毎の動的処理を Next.js 16 に伝える）
+  await connection();
 
   const { shareSlug } = await params;
   const item = await getGarageItem(shareSlug);
