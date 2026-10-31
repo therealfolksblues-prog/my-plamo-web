@@ -2,14 +2,15 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import { connection } from 'next/server'; // ★ 追加
 
-export const dynamic = 'force-dynamic';
+// ★ 以下の1行を削除してください
+// export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ shareSlug: string }>;
 }
 
-// Firestore から共有アイテムを取得する関数
 async function getGarageItem(shareSlug: string) {
   try {
     const q = query(
@@ -19,7 +20,7 @@ async function getGarageItem(shareSlug: string) {
     );
     const snapshot = await getDocs(q);
     if (snapshot.empty) return null;
-    
+
     const doc = snapshot.docs[0];
     return { id: doc.id, ...doc.data() } as any;
   } catch (e) {
@@ -28,11 +29,10 @@ async function getGarageItem(shareSlug: string) {
   }
 }
 
-// SNSシェア時のメタデータ設定
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { shareSlug } = await params;
   const item = await getGarageItem(shareSlug);
-  
+
   if (!item) return { title: '作品が見つかりません | 積みプラ管理' };
 
   const title = `${item.status === '完成' ? '【完成】' : ''}${item.name} (${item.maker ?? ''})`;
@@ -55,6 +55,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function SharePage({ params }: Props) {
+  await connection(); // ★ 追加（リクエスト毎の動的処理を Next.js 16 に伝える）
+
   const { shareSlug } = await params;
   const item = await getGarageItem(shareSlug);
 
@@ -87,7 +89,7 @@ export default async function SharePage({ params }: Props) {
           )}
         </div>
 
-        {/* 写真ギャラリー（複数枚ある場合） */}
+        {/* 写真ギャラリー */}
         {photoUrls.length > 1 && (
           <div className="flex gap-2 overflow-x-auto pb-2">
             {photoUrls.map((url, i) => (
