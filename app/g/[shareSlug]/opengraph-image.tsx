@@ -2,7 +2,6 @@ import { ImageResponse } from 'next/og';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-export const runtime = 'edge';
 export const alt = '積みプラ完成作品';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
