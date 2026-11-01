@@ -2,7 +2,15 @@
 
 import { useState } from 'react';
 
-export default function GarageItemView({ item, photoUrls }: { item: any; photoUrls: string[] }) {
+export default function GarageItemView({
+  item,
+  photoUrls,
+  authorProfile,
+}: {
+  item: any;
+  photoUrls: string[];
+  authorProfile?: any;
+}) {
   const initialImage = item.imageUrl || (photoUrls.length > 0 ? photoUrls[0] : '');
   const [activeImage, setActiveImage] = useState(initialImage);
 
@@ -13,8 +21,35 @@ export default function GarageItemView({ item, photoUrls }: { item: any; photoUr
         {/* ヘッダーブランド */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">
           <span className="text-xs font-bold text-amber-400 tracking-wider">GUNPLA ARCHIVE</span>
-          <span className="text-xs text-slate-400">積みプラ管理アプリ</span>
+          <span className="text-xs text-slate-400">積みプラ管理 & 製作ギャラリー</span>
         </div>
+
+        {/* 製作者（モデラー）プロフィールカード */}
+        {authorProfile && (
+          <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 flex items-center gap-4 shadow-lg">
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-700 flex-shrink-0 border border-amber-400/50 flex items-center justify-center">
+              {authorProfile.avatarUrl ? (
+                <img src={authorProfile.avatarUrl} alt={authorProfile.nickname} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-amber-400 font-bold text-lg">
+                  {authorProfile.nickname?.[0] ?? 'M'}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0 flex-1 space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">BUILDER</span>
+                {authorProfile.userSlug && (
+                  <span className="text-xs text-slate-400">@{authorProfile.userSlug}</span>
+                )}
+              </div>
+              <h2 className="text-sm font-bold text-white truncate">{authorProfile.nickname ?? '匿名モデラー'}</h2>
+              {authorProfile.bio && (
+                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">{authorProfile.bio}</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* メイン作品画像 */}
         <div className="relative rounded-2xl overflow-hidden bg-slate-800/80 border border-slate-700/50 shadow-2xl flex items-center justify-center min-h-[280px]">
@@ -115,7 +150,7 @@ export default function GarageItemView({ item, photoUrls }: { item: any; photoUr
 
         {/* フッター */}
         <div className="text-center pt-8 text-xs text-slate-500">
-          Powered by 積みプラ管理 App
+          Powered by GUNPLA ARCHIVE
         </div>
 
       </div>

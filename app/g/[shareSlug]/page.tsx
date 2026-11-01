@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -11,7 +11,7 @@ interface Props {
   params: Promise<{ shareSlug: string }>;
 }
 
-async function getGarageItem(shareSlug: string) {
+async function getGarageData(shareSlug: string) {
   try {
     const q = query(
       collection(db, 'garage_items'),
@@ -21,8 +21,18 @@ async function getGarageItem(shareSlug: string) {
     const snapshot = await getDocs(q);
     if (snapshot.empty) return null;
 
-    const doc = snapshot.docs[0];
-    return { id: doc.id, ...doc.data() } as any;
+    const itemDoc = snapshot.docs[0];
+    const itemData = { id: itemDoc.id, ...itemDoc.data() } as any;
+
+    let authorProfile = null;
+    if (itemData.authorUid) {
+      const userDoc = await getDoc(doc(db, 'users', itemData.authorUid));
+      if (userDoc.exists()) {
+        authorProfile = userDoc.data();
+      }
+    }
+
+    return { item: itemData, authorProfile };
   } catch (e) {
     console.error('Firestore Read Error:', e);
     return null;
@@ -31,14 +41,17 @@ async function getGarageItem(shareSlug: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { shareSlug } = await params;
-  const item = await getGarageItem(shareSlug);
+  const data = await getGarageData(shareSlug);
 
-  if (!item) return { title: '作品が見つかりません | 積みプラ管理' };
+  if (!data || !data.item) return { title: '作品が見つかりません | GUNPLA ARCHIVE' };
 
-  const title = `${item.status === '完成' ? '【完成】' : ''}${item.name} (${item.maker ?? ''})`;
-  const description = item.paintMemo ? `塗料レシピ: ${item.paintMemo}` : '積みプラ管理アプリからの共有作品です。';
+  const { item, authorProfile } = data;
+  const builderName = authorProfile?.nickname ? `by ${authorProfile.nickname}` : '';
+  const title = `${item.status === '完成' ? '【完成】' : ''}${item.name} (${item.maker ?? ''}) ${builderName}`;
+  const description = item.paintMemo ? `塗料レシピ: ${item.paintMemo}` : 'GUNPLA ARCHIVEで公開されている作品です。';
 
   return {
+    metadataBase: new URL('https://gunpla-archive.jp'),
     title,
     description,
     openGraph: {
@@ -58,22 +71,13 @@ export default async function SharePage({ params }: Props) {
   await connection();
 
   const { shareSlug } = await params;
-  const item = await getGarageItem(shareSlug);
+  const data = await getGarageData(shareSlug);
 
-  if (!item) {
+  if (!data || !data.item) {
     notFound();
   }
 
-  const photoUrls: string[] = item.photoUrls ?? (item.imageUrl ? [item.imageUrl] : []);
+  const photoUrls: string[] = data.item.photoUrls ?? (data.item.imageUrl ? [data.item.imageUrl] : []);
 
-  return <GarageItemView item={item} photoUrls={photoUrls} />;
+  return <GarageItemView item={data.item} photoUrls={photoUrls} authorProfile={data.authorProfile} />;
 }
-
-import { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  // ★ metadataBase に新ドメインを設定
-  metadataBase: new URL('https://gunpla-archive.jp'),
-  title: 'GUNPLA ARCHIVE',
-  description: 'ガンプラ・プラモデルの製作記録・ガレージ管理アプリ',
-};
