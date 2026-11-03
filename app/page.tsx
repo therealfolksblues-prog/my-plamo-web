@@ -1,69 +1,35 @@
-import Image from "next/image";
+// app/page.tsx
+import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main style={{ minHeight: '100vh', backgroundColor: '#121212', color: '#e0e0e0', padding: '40px 20px', fontFamily: 'sans-serif' }}>
+      <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+        
+        <header style={{ textAlign: 'center', marginBottom: '50px' }}>
+          <h1 style={{ fontSize: '32px', color: '#fff', marginBottom: '10px' }}>GUNPLA ARCHIVE</h1>
+          <p style={{ fontSize: '16px', color: '#90caf9' }}>あなたの「積んでるプラモデル」と「制作の軌跡」をスマートに管理するアプリ</p>
+        </header>
+
+        <section style={{ display: 'grid', gap: '20px', marginBottom: '40px' }}>
+          <div style={{ background: '#1e1e1e', padding: '24px', borderRadius: '8px', border: '1px solid #333' }}>
+            <h3 style={{ color: '#90caf9', marginTop: 0 }}>バーコードで簡単登録</h3>
+            <p style={{ color: '#b0b0b0' }}>JANコード読み取りでプラモデル情報を取得し、マイガレージへ簡単に追加できます。</p>
+          </div>
+          <div style={{ background: '#1e1e1e', padding: '24px', borderRadius: '8px', border: '1px solid #333' }}>
+            <h3 style={{ color: '#90caf9', marginTop: 0 }}>ステータス管理</h3>
+            <p style={{ color: '#b0b0b0' }}>「積みプラ」「制作中」「完成」のステータスごとにコレクションを整理できます。</p>
+          </div>
+        </section>
+
+        <footer style={{ textAlign: 'center', marginTop: '60px', borderTop: '1px solid #333', paddingTop: '20px' }}>
+          <p style={{ fontSize: '13px', color: '#777' }}>&copy; 2026 GUNPLA ARCHIVE All Rights Reserved.</p>
+          <Link href="/privacy" style={{ color: '#90caf9', textDecoration: 'none', fontSize: '14px' }}>
+            プライバシーポリシー
+          </Link>
+        </footer>
+
+      </div>
+    </main>
   );
 }
