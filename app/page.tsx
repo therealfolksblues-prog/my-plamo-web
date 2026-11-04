@@ -1,5 +1,4 @@
 // app/page.tsx
-"use client"; // ← ファイルの先頭に追加
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-900 text-white p-6 sm:p-12">
@@ -86,8 +85,18 @@ export default function Home() {
         </section>
 
         {/* フッター */}
-        <footer className="text-center text-xs text-gray-500 pt-8 border-t border-gray-800">
-          &copy; 2026 GUNPLA ARCHIVE All Rights Reserved.
+        <footer className="text-center text-xs text-gray-500 pt-8 border-t border-gray-800 space-y-3">
+          <div>
+            <a
+              href="/privacy"
+              className="text-blue-400 hover:underline transition-colors"
+            >
+              プライバシーポリシー
+            </a>
+          </div>
+          <div>
+            &copy; 2026 GUNPLA ARCHIVE All Rights Reserved.
+          </div>
         </footer>
 
       </div>
