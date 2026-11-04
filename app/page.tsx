@@ -1,4 +1,5 @@
 // app/page.tsx
+"use client"; // ← ファイルの先頭に追加
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-900 text-white p-6 sm:p-12">
