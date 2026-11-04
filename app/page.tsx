@@ -87,7 +87,7 @@ export default function Home() {
 
         {/* フッター */}
         <footer className="text-center text-xs text-gray-500 pt-8 border-t border-gray-800">
-          &copy; {new Date().getFullYear()} GUNPLA ARCHIVE All Rights Reserved.
+          &copy; 2026 GUNPLA ARCHIVE All Rights Reserved.
         </footer>
 
       </div>
