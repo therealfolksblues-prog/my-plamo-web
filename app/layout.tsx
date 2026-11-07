@@ -16,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <head>
+        <meta name="google-adsense-account" content="ca-pub-0746856569855183"></meta>
         <link rel="icon" href="/app_icon.png" />
         
         {/* Google Analytics (GA4) の読み込み */}
