@@ -80,13 +80,13 @@ export default function Home() {
               {/* アイコンカード */}
               <div className="relative bg-gray-900 border border-gray-800 p-6 rounded-3xl shadow-2xl flex flex-col items-center space-y-4 max-w-xs">
                 <img
-                  src="/app_icon.jpg" 
+                  src="public/app_icon.jpg" 
                   alt="GUNPLA ARCHIVE アプリ アイコン"
                   className="w-48 h-48 rounded-2xl shadow-lg border border-gray-700 object-cover"
                 />
                 <div className="text-center">
                   <h3 className="font-bold text-lg text-white">GUNPLA ARCHIVE</h3>
-                  <p className="text-xs text-gray-400">パッケージ版 / モバイルアプリ</p>
+                  <p className="text-xs text-gray-400">公式スマートフォンアプリ</p>
                 </div>
               </div>
             </div>
