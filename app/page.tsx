@@ -27,10 +27,10 @@ export default function Home() {
 
       {/* ヒーローセクション */}
       <section className="relative overflow-hidden py-20 sm:py-32">
-        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+        <div className="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
           
-          {/* 左側：キャッチコピーと導入 */}
-          <div className="space-y-6 text-center md:text-left">
+          {/* 左側：キャッチコピーと導入（幅を広く：8/12カラム） */}
+          <div className="md:col-span-8 space-y-6 text-center md:text-left">
             <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 px-3 py-1 rounded-full text-blue-400 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
               Google Playにて近日公開予定
@@ -43,7 +43,7 @@ export default function Home() {
               </span>
             </h1>
             
-            <p className="text-gray-400 text-base sm:text-lg leading-relaxed">
+            <p className="text-gray-400 text-base sm:text-lg leading-relaxed max-w-2xl">
               『積みプラ管理アプリ -GUNPLA ARCHIVE-』は、増え続けるガンプラの積みを整理し、あなたのパチ組みから塗装・完成までの全プロセスを美しくアーカイブするモデラー専用管理アプリです。
             </p>
 
@@ -71,8 +71,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* 右側：アプリアイコンのビジュアル演出 */}
-          <div className="flex justify-center">
+          {/* 右側：アプリアイコンのビジュアル演出（4/12カラム） */}
+          <div className="md:col-span-4 flex justify-center">
             <div className="relative">
               {/* 背景の光彩効果 */}
               <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-red-600 rounded-3xl blur-2xl opacity-30 animate-pulse"></div>
@@ -82,7 +82,7 @@ export default function Home() {
                 <img
                   src="/app_icon.png" 
                   alt="GUNPLA ARCHIVE アプリ アイコン"
-                  className="w-48 h-48 rounded-2xl shadow-lg border border-gray-700 object-cover"
+                  className="w-44 h-44 rounded-2xl shadow-lg border border-gray-700 object-cover"
                 />
                 <div className="text-center">
                   <h3 className="font-bold text-lg text-white">GUNPLA ARCHIVE</h3>
