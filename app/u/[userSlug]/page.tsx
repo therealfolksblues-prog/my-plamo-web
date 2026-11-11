@@ -17,16 +17,22 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
+// 🔽 ビルド時の静的プリレンダーを防ぎ、アクセス時に動的取得するよう強制
+export const dynamic = 'force-dynamic';
+
 interface PageProps {
-  params: {
+  params: Promise<{
     userSlug: string;
-  };
+  }>;
 }
 
-// ISR（インクリメンタル静的再生）または動的レンダリング
-
 export default async function UserProfilePage({ params }: PageProps) {
-  const { userSlug } = params;
+  // 🔽 Next.js App Routerの仕様に合わせて params を await する
+  const { userSlug } = await params;
+
+  if (!userSlug) {
+    notFound();
+  }
 
   // 1. usersコレクションから userSlug が一致するユーザーを検索
   const usersRef = collection(db, 'users');
