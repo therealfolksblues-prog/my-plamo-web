@@ -123,7 +123,7 @@ export default async function UserProfilePage({ params }: PageProps) {
             {items.map((item) => (
               <Link
                 key={item.id}
-                href={`/g/${item.shareSlug}`}
+                href={`/g/${item.shareSlug || item.id}`}
                 className="bg-[#1E293B] border border-white/5 rounded-xl overflow-hidden hover:border-amber-500/50 transition group flex flex-col"
               >
                 <div className="aspect-square bg-[#0F172A] relative overflow-hidden">
