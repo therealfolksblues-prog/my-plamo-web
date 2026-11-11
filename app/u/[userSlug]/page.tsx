@@ -24,7 +24,6 @@ interface PageProps {
 }
 
 // ISR（インクリメンタル静的再生）または動的レンダリング
-export const revalidate = 60; // 60秒ごとに再検証
 
 export default async function UserProfilePage({ params }: PageProps) {
   const { userSlug } = params;
