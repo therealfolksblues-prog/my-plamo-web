@@ -11,6 +11,46 @@ interface Props {
   params: Promise<{ shareSlug: string }>;
 }
 
+export default async function ItemDetailPage({ params }: PageProps) {
+  const { shareSlug } = await params;
+
+  let itemData: any = null;
+
+  // 1. まず shareSlug フィールドとして検索
+  const q = query(
+    collection(db, 'garage_items'),
+    where('shareSlug', '==', shareSlug),
+    limit(1)
+  );
+  const querySnapshot = await getDocs(q);
+
+  if (!querySnapshot.empty) {
+    itemData = querySnapshot.docs[0].data();
+  } else {
+    // 2. 見つからない場合は、パラメータを「ドキュメントID」として直接取得を試みる（フォールバック）
+    const docRef = doc(db, 'garage_items', shareSlug);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      itemData = docSnap.data();
+    }
+  }
+
+  // 3. それでも見つからなければ 404
+  if (!itemData) {
+    notFound();
+  }
+  // --- 以降、itemData を使った画面描画処理 ---
+  return (
+    <main className="min-h-screen bg-[#0F172A] text-white p-6">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold">{itemData.name}</h1>
+        <p className="text-gray-400">{itemData.maker} • {itemData.grade}</p>
+        {/* 画像や詳細情報などの表示 */}
+      </div>
+    </main>
+  );
+}
+
 async function getGarageData(shareSlug: string) {
   try {
     const q = query(
