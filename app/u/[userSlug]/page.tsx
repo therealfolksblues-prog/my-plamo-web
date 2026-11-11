@@ -17,9 +17,6 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
-// 🔽 ビルド時の静的プリレンダーを防ぎ、アクセス時に動的取得するよう強制
-export const dynamic = 'force-dynamic';
-
 interface PageProps {
   params: Promise<{
     userSlug: string;
