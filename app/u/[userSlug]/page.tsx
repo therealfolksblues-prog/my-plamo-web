@@ -51,7 +51,6 @@ export default async function UserProfilePage({ params }: PageProps) {
   const qItems = query(
     itemsRef,
     where('userId', '==', userId),
-    where('isPublic', '==', true)
   );
   const itemsSnapshot = await getDocs(qItems);
 
