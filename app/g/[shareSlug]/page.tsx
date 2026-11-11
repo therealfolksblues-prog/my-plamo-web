@@ -2,8 +2,7 @@ import { doc, getDoc, collection, query, where, getDocs, limit } from 'firebase/
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { notFound } from 'next/navigation';
-// GarageItemView などのコンポーネントインポート（パスは実際のプロジェクトに合わせて調整してください）
-import GarageItemView from '@/components/GarageItemView'; 
+import GarageItemView from './GarageItemView'; 
 
 // Firebase初期化
 const firebaseConfig = {
