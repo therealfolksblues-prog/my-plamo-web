@@ -82,6 +82,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                 src={userData.avatarUrl}
                 alt={userData.nickname || 'モデラー'}
                 fill
+                unoptimized={true}
                 className="object-cover"
               />
             ) : (
@@ -131,6 +132,7 @@ export default async function UserProfilePage({ params }: PageProps) {
                       src={item.imageUrl}
                       alt={item.name}
                       fill
+                      unoptimized={true}
                       className="object-cover group-hover:scale-105 transition duration-300"
                     />
                   ) : (
