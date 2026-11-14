@@ -1,182 +1,246 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+
+interface GarageItemViewProps {
+  item: any;
+  photoUrls: string[];
+  authorProfile: any;
+}
 
 export default function GarageItemView({
   item,
   photoUrls,
   authorProfile,
-}: {
-  item: any;
-  photoUrls: string[];
-  authorProfile?: any;
-}) {
-  const initialImage = item.imageUrl || (photoUrls.length > 0 ? photoUrls[0] : '');
-  const [activeImage, setActiveImage] = useState(initialImage);
+}: GarageItemViewProps) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // AdSense広告を動的に読み込むための処理
-  useEffect(() => {
-    try {
-      ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-    } catch (error) {
-      console.error('AdSense error:', error);
-    }
-  }, []);
+  // 塗装・工作タグの取得（配列フィールド名の揺れに対応）
+  const rawTags = item.tags ?? item.paintTags ?? item.workTags ?? [];
+  const tags: string[] = Array.isArray(rawTags)
+    ? rawTags
+    : typeof rawTags === 'string' && rawTags.trim() !== ''
+    ? rawTags.split(',').map((t) => t.trim())
+    : [];
+
+  // ビルダー情報
+  const builderName =
+    authorProfile?.nickname || authorProfile?.displayName || '名無しのモデラー';
+  const builderSlug = authorProfile?.userSlug;
+  const builderAvatar = authorProfile?.avatarUrl || authorProfile?.photoURL;
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white py-8 px-4 sm:px-6 selection:bg-blue-500 selection:text-white">
-      <div className="max-w-2xl mx-auto space-y-6">
-        
-        {/* ヘッダーブランド */}
-        <div className="flex items-center justify-between border-b border-gray-800 pb-4">
-          <a href="/" className="font-bold tracking-wider text-blue-400 text-sm hover:underline">
+    <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black pb-20">
+      {/* ヘッダー */}
+      <header className="border-b border-white/10 bg-[#0F172A]/80 backdrop-blur sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+          <Link
+            href="/"
+            className="font-bold tracking-wider text-amber-400 text-sm hover:opacity-80 transition"
+          >
             GUNPLA ARCHIVE
-          </a>
-          <span className="text-xs text-gray-400">積みプラ管理 & 製作ギャラリー</span>
-        </div>
-
-        {/* 製作者（モデラー）プロフィールカード */}
-        {authorProfile && (
-          <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-800 flex-shrink-0 border border-blue-500/40 flex items-center justify-center">
-              {authorProfile.avatarUrl ? (
-                <img src={authorProfile.avatarUrl} alt={authorProfile.nickname} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-blue-400 font-bold text-lg">
-                  {authorProfile.nickname?.[0] ?? 'M'}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0 flex-1 space-y-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-500/10 px-2 py-0.5 rounded">BUILDER</span>
-                {authorProfile.userSlug && (
-                  <span className="text-xs text-gray-400">@{authorProfile.userSlug}</span>
-                )}
-              </div>
-              <h2 className="text-sm font-bold text-white truncate">{authorProfile.nickname ?? '匿名モデラー'}</h2>
-              {authorProfile.bio && (
-                <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">{authorProfile.bio}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* メイン作品画像 */}
-        <div className="relative rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 shadow-2xl flex items-center justify-center min-h-[280px]">
-          {activeImage ? (
-            <img
-              src={activeImage}
-              alt={item.name}
-              className="w-full max-h-[450px] object-contain transition-all duration-300"
-            />
-          ) : (
-            <div className="text-gray-500 text-sm">画像がありません</div>
+          </Link>
+          {builderSlug && (
+            <Link
+              href={`/u/${builderSlug}`}
+              className="text-xs text-gray-300 hover:text-amber-400 transition"
+            >
+              @{builderSlug} のガレージへ →
+            </Link>
           )}
         </div>
+      </header>
 
-        {/* 写真ギャラリー（サムネイルタップで切り替え） */}
-        {photoUrls.length > 1 && (
-          <div className="space-y-2">
-            <p className="text-xs text-gray-400">写真ギャラリー ({photoUrls.length}枚) - タップして切り替え</p>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {photoUrls.map((url, i) => {
-                const isSelected = activeImage === url;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => setActiveImage(url)}
-                    className={`w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 transition-all ${
-                      isSelected
-                        ? 'border-2 border-blue-500 ring-2 ring-blue-500/30'
-                        : 'border border-gray-800 opacity-60 hover:opacity-100'
-                    }`}
-                  >
-                    <img
-                      src={url}
-                      alt={`Photo ${i + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                );
-              })}
-            </div>
+      <div className="max-w-4xl mx-auto px-4 pt-8 space-y-8">
+        {/* --- メイン画像ギャラリー --- */}
+        <section className="space-y-3">
+          <div className="aspect-square sm:aspect-[4/3] w-full bg-[#1E293B] border border-white/10 rounded-2xl overflow-hidden relative shadow-2xl">
+            {photoUrls.length > 0 ? (
+              <Image
+                src={photoUrls[selectedImageIndex] || photoUrls[0]}
+                alt={item.name || 'ガンプラ作品'}
+                fill
+                unoptimized={true}
+                className="object-contain"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
+                画像は登録されていません
+              </div>
+            )}
           </div>
-        )}
 
-        {/* キット基本情報 */}
-        <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 space-y-3 shadow-xl">
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                item.status === '完成'
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : item.status === '制作中'
-                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                  : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-              }`}
-            >
-              {item.status ?? '積み'}
-            </span>
+          {/* 複数枚ある場合のサムネイル切り替え */}
+          {photoUrls.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {photoUrls.map((url, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(idx)}
+                  className={`w-16 h-16 rounded-lg overflow-hidden relative flex-shrink-0 border-2 transition ${
+                    selectedImageIndex === idx
+                      ? 'border-amber-500'
+                      : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <Image
+                    src={url}
+                    alt={`${item.name} サムネイル ${idx + 1}`}
+                    fill
+                    unoptimized={true}
+                    className="object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* --- キット情報・グレード・塗装タグ --- */}
+        <section className="bg-[#1E293B] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
+          {/* バッジ群（ステータス・グレード・スケール） */}
+          <div className="flex flex-wrap items-center gap-2">
+            {item.status && (
+              <span
+                className={`text-xs font-bold px-2.5 py-1 rounded ${
+                  item.status === '完成'
+                    ? 'bg-emerald-600 text-white'
+                    : item.status === '制作中'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-blue-600 text-white'
+                }`}
+              >
+                {item.status}
+              </span>
+            )}
+
+            {item.grade && (
+              <span className="text-xs font-bold px-2.5 py-1 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                {item.grade}
+              </span>
+            )}
+
             {item.scale && (
-              <span className="text-xs text-gray-300 bg-gray-800 px-2.5 py-1 rounded-full border border-gray-700">
+              <span className="text-xs font-mono px-2.5 py-1 rounded bg-white/5 text-gray-300 border border-white/10">
                 {item.scale}
+              </span>
+            )}
+
+            {item.maker && (
+              <span className="text-xs px-2.5 py-1 rounded bg-white/5 text-gray-400">
+                {item.maker}
               </span>
             )}
           </div>
 
-          <h1 className="text-2xl font-black text-white leading-tight">{item.name}</h1>
-          <p className="text-sm text-gray-400">メーカー: {item.maker ?? '不明'}</p>
+          {/* キット名 */}
+          <h1 className="text-2xl sm:text-3xl font-bold text-white leading-snug">
+            {item.name}
+          </h1>
 
-          {/* 制作手法タグ */}
-          {item.techniqueTags && item.techniqueTags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-2">
-              {item.techniqueTags.map((tag: string) => (
-                <span
-                  key={tag}
-                  className="text-xs bg-gray-800/80 text-gray-300 px-2.5 py-1 rounded-md border border-gray-700/60"
-                >
-                  #{tag}
-                </span>
-              ))}
+          {/* 塗装・工作タグ一覧 */}
+          {tags.length > 0 && (
+            <div className="space-y-2 pt-1">
+              <p className="text-xs font-bold text-gray-400 tracking-wider">
+                塗装・工作タグ
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center text-xs font-medium px-3 py-1 rounded-full bg-[#0F172A] text-amber-300 border border-amber-500/30"
+                  >
+                    #{tag.replace(/^#/, '')}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
-        </div>
 
-        {/* 塗料メモ・レシピ */}
-        {item.paintMemo && (
-          <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 space-y-2 shadow-xl">
-            <h2 className="text-xs font-bold text-blue-400 uppercase tracking-wider">塗料メモ・カラーレシピ</h2>
-            <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">{item.paintMemo}</p>
-          </div>
-        )}
+          {/* 制作メモ・塗装レシピ */}
+          {(item.memo || item.paintMemo) && (
+            <div className="pt-4 border-t border-white/10 space-y-4">
+              {item.memo && (
+                <div className="space-y-1.5">
+                  <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    制作メモ
+                  </h2>
+                  <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap">
+                    {item.memo}
+                  </p>
+                </div>
+              )}
 
-        {/* 一般メモ */}
-        {item.memo && (
-          <div className="bg-gray-900/80 border border-gray-800 rounded-2xl p-6 space-y-2 shadow-xl">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">制作メモ</h2>
-            <p className="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed">{item.memo}</p>
-          </div>
-        )}
+              {item.paintMemo && (
+                <div className="space-y-1.5">
+                  <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    塗装レシピ・使用塗料
+                  </h2>
+                  <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap bg-[#0F172A]/60 p-4 rounded-xl border border-white/5">
+                    {item.paintMemo}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
 
-        {/* Google AdSense 広告エリア（/g/スラッグ詳細ページ用） */}
-        {/*<div className="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 text-center">
-          <p className="text-[10px] text-gray-500 mb-2 uppercase tracking-widest">スポンサーリンク</p>
-          <ins
-            className="adsbygoogle"
-            style={{ display: 'block' }}
-            data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-            data-ad-slot="YYYYYYYYYY"
-            data-ad-format="auto"
-            data-full-width-responsive="true"
-          ></ins>
-        </div>*/}
+        {/* --- ビルダー（作者）プロフィール＆ポートフォリオリンク --- */}
+        <section className="bg-[#1E293B] border border-white/10 rounded-2xl p-6 shadow-xl">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">
+            BUILDER
+          </p>
 
-        {/* フッター */}
-        <div className="text-center pt-8 text-xs text-gray-500 border-t border-gray-800">
-          &copy; 2026 GUNPLA ARCHIVE All Rights Reserved.
-        </div>
+          {builderSlug ? (
+            <Link
+              href={`/u/${builderSlug}`}
+              className="flex items-center justify-between gap-4 p-3 -m-3 rounded-xl hover:bg-white/5 transition group"
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="w-12 h-12 rounded-full overflow-hidden bg-[#0F172A] border-2 border-amber-500 flex-shrink-0 relative">
+                  {builderAvatar ? (
+                    <Image
+                      src={builderAvatar}
+                      alt={builderName}
+                      fill
+                      unoptimized={true}
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">
+                      {builderName.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-white group-hover:text-amber-400 transition truncate">
+                    {builderName}
+                  </p>
+                  <p className="text-xs text-amber-400/80 font-mono truncate">
+                    @{builderSlug}
+                  </p>
+                </div>
+              </div>
 
+              <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-lg flex-shrink-0 group-hover:bg-amber-500 group-hover:text-black transition">
+                他の作品を見る →
+              </span>
+            </Link>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-[#0F172A] border border-white/10 flex-shrink-0 flex items-center justify-center text-gray-400 font-bold">
+                {builderName.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p className="font-bold text-white">{builderName}</p>
+                <p className="text-xs text-gray-400">モデラー</p>
+              </div>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );
