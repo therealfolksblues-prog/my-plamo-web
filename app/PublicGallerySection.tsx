@@ -56,7 +56,7 @@ export default async function PublicGallerySection() {
 
   return (
     <section className="max-w-5xl mx-auto px-4 py-16">
-      <div className="flex items-center justify-between mb-6 border-l-4 border-amber-500 pl-3">
+      <div className="flex items-center justify-between mb-6 border-l-4 border-blue-500 pl-3">
         <div>
           <h2 className="text-xl font-bold text-white tracking-wider">
             みんなの公開ガレージ
@@ -65,7 +65,7 @@ export default async function PublicGallerySection() {
             モデラーたちが登録・製作した最新の公開キット
           </p>
         </div>
-        <span className="text-xs text-amber-400 font-mono">
+        <span className="text-xs text-blue-400 font-mono">
           RECENT WORKS
         </span>
       </div>
@@ -75,9 +75,9 @@ export default async function PublicGallerySection() {
           <Link
             key={item.id}
             href={`/g/${item.shareSlug || item.id}`}
-            className="bg-[#1E293B] border border-white/5 rounded-xl overflow-hidden hover:border-amber-500/50 transition group flex flex-col"
+            className="bg-[#1E293B] border border-white/5 rounded-xl overflow-hidden hover:border-blue-500/50 transition group flex flex-col"
           >
-            <div className="aspect-square bg-[#0F172A] relative overflow-hidden">
+            <div className="aspect-square bg-gray-900 relative overflow-hidden">
               {item.imageUrl ? (
                 <Image
                   src={item.imageUrl}
