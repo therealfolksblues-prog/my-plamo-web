@@ -1,4 +1,8 @@
 // app/page.tsx
+
+import { Suspense } from 'react';
+import PublicGallerySection from './_components/PublicGallerySection';
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-950 text-white selection:bg-blue-500 selection:text-white">
@@ -94,6 +98,10 @@ export default function Home() {
 
         </div>
       </section>
+
+      <Suspense fallback={<div className="py-12 text-center text-xs text-gray-500">公開作品を読み込み中...</div>}>
+        <PublicGallerySection />
+      </Suspense>
 
       {/* 主な機能（Features）セクション */}
       <section className="py-20 bg-gray-900/50 border-t border-b border-gray-800/80">
