@@ -1,6 +1,7 @@
 // app/page.tsx
 
 import { Suspense } from 'react';
+import Link from 'next/link';
 import PublicGallerySection from './PublicGallerySection';
 
 export default function Home() {
