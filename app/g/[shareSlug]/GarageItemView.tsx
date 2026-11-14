@@ -32,7 +32,7 @@ export default function GarageItemView({
   const builderAvatar = authorProfile?.avatarUrl || authorProfile?.photoURL;
 
   return (
-    <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black pb-20">
+    <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black flex flex-col">
       {/* ヘッダー */}
       <header className="border-b border-white/10 bg-[#0F172A]/80 backdrop-blur sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -47,13 +47,13 @@ export default function GarageItemView({
               href={`/u/${builderSlug}`}
               className="text-xs text-gray-300 hover:text-amber-400 transition"
             >
-              @{builderSlug} のガレージへ →
+              @{builderSlug} のガレージへ &rarr;
             </Link>
           )}
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 pt-8 space-y-8">
+      <div className="max-w-4xl w-full mx-auto px-4 pt-8 pb-16 space-y-8 flex-grow">
         {/* --- メイン画像ギャラリー --- */}
         <section className="space-y-3">
           <div className="aspect-square sm:aspect-[4/3] w-full bg-[#1E293B] border border-white/10 rounded-2xl overflow-hidden relative shadow-2xl">
@@ -226,7 +226,7 @@ export default function GarageItemView({
               </div>
 
               <span className="text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-3 py-1.5 rounded-lg flex-shrink-0 group-hover:bg-amber-500 group-hover:text-black transition">
-                他の作品を見る →
+                他の作品を見る &rarr;
               </span>
             </Link>
           ) : (
@@ -242,6 +242,29 @@ export default function GarageItemView({
           )}
         </section>
       </div>
+
+      {/* フッター */}
+      <footer className="border-t border-white/10 py-8 px-4 text-xs text-gray-500">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <Link href="/" className="hover:text-amber-400 transition-colors">
+              トップページ
+            </Link>
+            <Link href="/privacy" className="hover:text-amber-400 transition-colors">
+              プライバシーポリシー
+            </Link>
+            <a
+              href="https://forms.gle/EERnUPegAnGUazYB8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-amber-400 transition-colors"
+            >
+              お問い合わせ
+            </a>
+          </div>
+          <div>&copy; 2026 GUNPLA ARCHIVE All Rights Reserved.</div>
+        </div>
+      </footer>
     </main>
   );
 }

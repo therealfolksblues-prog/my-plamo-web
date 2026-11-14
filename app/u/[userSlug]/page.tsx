@@ -27,7 +27,7 @@ interface PageProps {
   }>;
 }
 
-// ユーザー情報取得を cache() でラップし、generateMetadata とページ本体での重複クエリを防止
+// ユーザー情報取得をキャッシュ化（generateMetadata と本体での二重クエリを防止）
 const getUserBySlug = cache(async (userSlug: string) => {
   if (!userSlug) return null;
 
@@ -46,21 +46,22 @@ const getUserBySlug = cache(async (userSlug: string) => {
   };
 });
 
+// 動的OGP・メタデータ生成
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { userSlug } = await params;
-  const userResult = await getUserBySlug(userSlug);
+  const user = await getUserBySlug(userSlug);
 
-  if (!userResult) {
+  if (!user) {
     return {
       title: 'モデラーが見つかりません | GUNPLA ARCHIVE',
     };
   }
 
-  const userData = userResult.data;
+  const userData = user.data;
   const nickname = userData.nickname || '名無しのモデラー';
   const title = `${nickname}のガレージ | GUNPLA ARCHIVE`;
   const description =
-    userData.bio || `${nickname}（@${userSlug}）さんのガンプラ・積みプラポートフォリオ`;
+    userData.bio || `${nickname}さんの積みプラ・製作作品ポートフォリオ`;
   const avatarUrl = userData.avatarUrl;
 
   return {
@@ -85,21 +86,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function UserProfilePage({ params }: PageProps) {
   const { userSlug } = await params;
 
-  if (!userSlug) {
-    notFound();
-  }
+  const user = await getUserBySlug(userSlug);
 
-  // 1. usersコレクションから userSlug が一致するユーザーを取得（キャッシュ利用）
-  const userResult = await getUserBySlug(userSlug);
-
-  if (!userResult) {
+  if (!user) {
     notFound(); // 404ページへ
   }
 
-  const userData = userResult.data;
-  const userId = userResult.id;
+  const userId = user.id;
+  const userData = user.data;
 
-  // 2. 該当ユーザーの公開作品（garage_items, isPublic: true）を取得
+  // 該当ユーザーの公開作品（garage_items, isPublic: true）を取得
   const itemsRef = collection(db, 'garage_items');
   const qItems = query(
     itemsRef,
@@ -124,8 +120,8 @@ export default async function UserProfilePage({ params }: PageProps) {
   }>;
 
   return (
-    <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black">
-      <div className="max-w-4xl mx-auto px-4 py-12">
+    <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black flex flex-col">
+      <div className="max-w-4xl w-full mx-auto px-4 py-12 flex-grow">
         
         {/* --- プロフィールヘッダー --- */}
         <section className="bg-[#1E293B] border border-white/5 rounded-2xl p-8 mb-10 flex flex-col items-center text-center shadow-xl">
@@ -228,6 +224,29 @@ export default async function UserProfilePage({ params }: PageProps) {
         )}
 
       </div>
+
+      {/* フッター */}
+      <footer className="border-t border-white/10 py-8 px-4 text-xs text-gray-500">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <Link href="/" className="hover:text-amber-400 transition-colors">
+              トップページ
+            </Link>
+            <Link href="/privacy" className="hover:text-amber-400 transition-colors">
+              プライバシーポリシー
+            </Link>
+            <a
+              href="https://forms.gle/EERnUPegAnGUazYB8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-amber-400 transition-colors"
+            >
+              お問い合わせ
+            </a>
+          </div>
+          <div>&copy; 2026 GUNPLA ARCHIVE All Rights Reserved.</div>
+        </div>
+      </footer>
     </main>
   );
 }

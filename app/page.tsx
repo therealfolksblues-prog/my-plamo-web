@@ -156,10 +156,18 @@ export default function Home() {
       </section>
 
       {/* フッター */}
-      <footer className="max-w-6xl mx-auto px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-        <div>
-          <a href="/privacy" className="hover:text-blue-400 transition-colors">
+      <footer className="max-w-6xl mx-auto px-6 py-12 border-t border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+        <div className="flex items-center gap-6">
+          <Link href="/privacy" className="hover:text-blue-400 transition-colors">
             プライバシーポリシー
+          </Link>
+          <a
+            href="https://forms.gle/EERnUPegAnGUazYB8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-400 transition-colors"
+          >
+            お問い合わせ
           </a>
         </div>
         <div>
