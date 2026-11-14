@@ -1,7 +1,7 @@
 // app/page.tsx
 
 import { Suspense } from 'react';
-import PublicGallerySection from './_components/PublicGallerySection';
+import PublicGallerySection from './PublicGallerySection';
 
 export default function Home() {
   return (
