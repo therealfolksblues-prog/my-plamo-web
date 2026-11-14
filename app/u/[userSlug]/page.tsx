@@ -1,3 +1,5 @@
+import { cache } from 'react';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, limit } from 'firebase/firestore';
@@ -25,26 +27,77 @@ interface PageProps {
   }>;
 }
 
+// ユーザー情報取得を cache() でラップし、generateMetadata とページ本体での重複クエリを防止
+const getUserBySlug = cache(async (userSlug: string) => {
+  if (!userSlug) return null;
+
+  const usersRef = collection(db, 'users');
+  const qUser = query(usersRef, where('userSlug', '==', userSlug), limit(1));
+  const userSnapshot = await getDocs(qUser);
+
+  if (userSnapshot.empty) {
+    return null;
+  }
+
+  const userDoc = userSnapshot.docs[0];
+  return {
+    id: userDoc.id,
+    data: userDoc.data(),
+  };
+});
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { userSlug } = await params;
+  const userResult = await getUserBySlug(userSlug);
+
+  if (!userResult) {
+    return {
+      title: 'モデラーが見つかりません | GUNPLA ARCHIVE',
+    };
+  }
+
+  const userData = userResult.data;
+  const nickname = userData.nickname || '名無しのモデラー';
+  const title = `${nickname}のガレージ | GUNPLA ARCHIVE`;
+  const description =
+    userData.bio || `${nickname}（@${userSlug}）さんのガンプラ・積みプラポートフォリオ`;
+  const avatarUrl = userData.avatarUrl;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'profile',
+      url: `https://gunpla-archive.jp/u/${userSlug}`,
+      images: avatarUrl ? [{ url: avatarUrl }] : [],
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+      images: avatarUrl ? [avatarUrl] : [],
+    },
+  };
+}
+
 export default async function UserProfilePage({ params }: PageProps) {
-  // 🔽 Next.js App Routerの仕様に合わせて params を await する
   const { userSlug } = await params;
 
   if (!userSlug) {
     notFound();
   }
 
-  // 1. usersコレクションから userSlug が一致するユーザーを検索
-  const usersRef = collection(db, 'users');
-  const qUser = query(usersRef, where('userSlug', '==', userSlug), limit(1));
-  const userSnapshot = await getDocs(qUser);
+  // 1. usersコレクションから userSlug が一致するユーザーを取得（キャッシュ利用）
+  const userResult = await getUserBySlug(userSlug);
 
-  if (userSnapshot.empty) {
+  if (!userResult) {
     notFound(); // 404ページへ
   }
 
-  const userDoc = userSnapshot.docs[0];
-  const userData = userDoc.data();
-  const userId = userDoc.id;
+  const userData = userResult.data;
+  const userId = userResult.id;
 
   // 2. 該当ユーザーの公開作品（garage_items, isPublic: true）を取得
   const itemsRef = collection(db, 'garage_items');
