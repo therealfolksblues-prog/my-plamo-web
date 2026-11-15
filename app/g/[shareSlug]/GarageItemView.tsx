@@ -1,8 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, updateDoc, increment } from 'firebase/firestore';
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
+const db = getFirestore(app);
 
 interface GarageItemViewProps {
   item: any;
@@ -16,6 +30,35 @@ export default function GarageItemView({
   authorProfile,
 }: GarageItemViewProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [viewCount, setViewCount] = useState<number>(item.viewCount ?? 0);
+
+  // 閲覧数のカウントアップ（同一セッション内の重複カウントを防止）
+  useEffect(() => {
+    if (!item?.id) return;
+
+    const storageKey = `viewed_garage_${item.id}`;
+    if (typeof window !== 'undefined' && sessionStorage.getItem(storageKey)) {
+      return;
+    }
+
+    const incrementView = async () => {
+      try {
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem(storageKey, '1');
+        }
+        const itemRef = doc(db, 'garage_items', item.id);
+        await updateDoc(itemRef, {
+          viewCount: increment(1),
+        });
+        setViewCount((prev) => prev + 1);
+      } catch (error) {
+        // 権限エラー等が出ても画面表示は止めない
+        console.error('Failed to increment view count:', error);
+      }
+    };
+
+    incrementView();
+  }, [item?.id]);
 
   // 制作手法・工作タグの取得（Firestoreの techniqueTags を優先）
   const rawTags =
@@ -102,39 +145,68 @@ export default function GarageItemView({
 
         {/* --- キット情報・グレード・制作手法タグ --- */}
         <section className="bg-[#1E293B] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
-          {/* バッジ群（ステータス・グレード・スケール） */}
-          <div className="flex flex-wrap items-center gap-2">
-            {item.status && (
-              <span
-                className={`text-xs font-bold px-2.5 py-1 rounded ${
-                  item.status === '完成'
-                    ? 'bg-emerald-600 text-white'
-                    : item.status === '制作中'
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-blue-600 text-white'
-                }`}
+          {/* バッジ群（ステータス・グレード・スケール ＋ 右端に閲覧数） */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {item.status && (
+                <span
+                  className={`text-xs font-bold px-2.5 py-1 rounded ${
+                    item.status === '完成'
+                      ? 'bg-emerald-600 text-white'
+                      : item.status === '制作中'
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-blue-600 text-white'
+                  }`}
+                >
+                  {item.status}
+                </span>
+              )}
+
+              {item.grade && (
+                <span className="text-xs font-bold px-2.5 py-1 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  {item.grade}
+                </span>
+              )}
+
+              {item.scale && (
+                <span className="text-xs font-mono px-2.5 py-1 rounded bg-white/5 text-gray-300 border border-white/10">
+                  {item.scale}
+                </span>
+              )}
+
+              {item.maker && (
+                <span className="text-xs px-2.5 py-1 rounded bg-white/5 text-gray-400">
+                  {item.maker}
+                </span>
+              )}
+            </div>
+
+            {/* 閲覧数カウンター */}
+            <div
+              className="inline-flex items-center gap-1.5 text-xs font-mono text-gray-400 bg-[#0F172A]/80 border border-white/10 px-3 py-1 rounded-full"
+              title="閲覧数"
+            >
+              <svg
+                className="w-3.5 h-3.5 text-amber-400"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
               >
-                {item.status}
-              </span>
-            )}
-
-            {item.grade && (
-              <span className="text-xs font-bold px-2.5 py-1 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
-                {item.grade}
-              </span>
-            )}
-
-            {item.scale && (
-              <span className="text-xs font-mono px-2.5 py-1 rounded bg-white/5 text-gray-300 border border-white/10">
-                {item.scale}
-              </span>
-            )}
-
-            {item.maker && (
-              <span className="text-xs px-2.5 py-1 rounded bg-white/5 text-gray-400">
-                {item.maker}
-              </span>
-            )}
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              <span>{viewCount.toLocaleString()}</span>
+              <span className="text-[10px] text-gray-500">VIEWS</span>
+            </div>
           </div>
 
           {/* キット名 */}
