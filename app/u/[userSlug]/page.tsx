@@ -1,3 +1,4 @@
+// app/u/[userSlug]/page.tsx
 import { cache } from 'react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
@@ -116,8 +117,12 @@ export default async function UserProfilePage({ params }: PageProps) {
     imageUrl: string;
     status: string;
     shareSlug: string;
+    viewCount?: number;
     updatedAt?: any;
   }>;
+
+  // 公開作品の合計閲覧数を算出
+  const totalViews = items.reduce((sum, item) => sum + (item.viewCount ?? 0), 0);
 
   return (
     <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black flex flex-col">
@@ -156,11 +161,33 @@ export default async function UserProfilePage({ params }: PageProps) {
         </section>
 
         {/* --- 作品一覧セクション --- */}
-        <div className="flex items-center justify-between mb-6 border-l-4 border-amber-500 pl-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-6 border-l-4 border-amber-500 pl-3">
           <h2 className="text-lg font-bold tracking-wider">公開作品ギャラリー</h2>
-          <span className="text-xs text-gray-400 font-mono">
-            {items.length} WORKS
-          </span>
+          <div className="flex items-center gap-3 text-xs text-gray-400 font-mono">
+            <span>{items.length} WORKS</span>
+            <span className="text-white/20">|</span>
+            <span className="inline-flex items-center gap-1 text-amber-400">
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+              TOTAL {totalViews.toLocaleString()} VIEWS
+            </span>
+          </div>
         </div>
 
         {items.length === 0 ? (
@@ -214,9 +241,36 @@ export default async function UserProfilePage({ params }: PageProps) {
                       {item.name}
                     </h3>
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-2 truncate">
-                    {item.maker} {item.scale ? `• ${item.scale}` : ''}
-                  </p>
+
+                  <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/5 text-[10px] text-gray-400">
+                    <span className="truncate">
+                      {item.maker} {item.scale ? `• ${item.scale}` : ''}
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1 font-mono text-gray-400 flex-shrink-0"
+                      title="閲覧数"
+                    >
+                      <svg
+                        className="w-3 h-3 text-amber-400"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                      </svg>
+                      {(item.viewCount ?? 0).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}

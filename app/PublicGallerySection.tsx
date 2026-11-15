@@ -1,3 +1,4 @@
+// app/PublicGallerySection.tsx
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import Image from 'next/image';
@@ -24,6 +25,7 @@ interface GarageItem {
   imageUrl?: string;
   status?: string;
   shareSlug?: string;
+  viewCount?: number;
   updatedAt?: any;
   createdAt?: any;
 }
@@ -55,7 +57,7 @@ export default async function PublicGallerySection() {
   }
 
   return (
-    <section className="max-w-5xl mx-auto px-4 py-16">
+    <section className="max-w-6xl mx-auto px-6 py-16">
       <div className="flex items-center justify-between mb-6 border-l-4 border-blue-500 pl-3">
         <div>
           <h2 className="text-xl font-bold text-white tracking-wider">
@@ -75,9 +77,9 @@ export default async function PublicGallerySection() {
           <Link
             key={item.id}
             href={`/g/${item.shareSlug || item.id}`}
-            className="bg-[#1E293B] border border-white/5 rounded-xl overflow-hidden hover:border-blue-500/50 transition group flex flex-col"
+            className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-blue-500/50 transition group flex flex-col"
           >
-            <div className="aspect-square bg-gray-900 relative overflow-hidden">
+            <div className="aspect-square bg-gray-950 relative overflow-hidden">
               {item.imageUrl ? (
                 <Image
                   src={item.imageUrl}
@@ -109,7 +111,7 @@ export default async function PublicGallerySection() {
             <div className="p-3 flex flex-col flex-grow justify-between">
               <div>
                 {item.grade && (
-                  <span className="text-[10px] text-amber-400 font-bold">
+                  <span className="text-[10px] text-blue-400 font-bold">
                     {item.grade}
                   </span>
                 )}
@@ -117,9 +119,36 @@ export default async function PublicGallerySection() {
                   {item.name}
                 </h3>
               </div>
-              <p className="text-[10px] text-gray-400 mt-2 truncate">
-                {item.maker} {item.scale ? `• ${item.scale}` : ''}
-              </p>
+
+              <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-gray-800/80 text-[10px] text-gray-400">
+                <span className="truncate">
+                  {item.maker} {item.scale ? `• ${item.scale}` : ''}
+                </span>
+                <span
+                  className="inline-flex items-center gap-1 font-mono text-gray-400 flex-shrink-0"
+                  title="閲覧数"
+                >
+                  <svg
+                    className="w-3 h-3 text-blue-400"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  {(item.viewCount ?? 0).toLocaleString()}
+                </span>
+              </div>
             </div>
           </Link>
         ))}
