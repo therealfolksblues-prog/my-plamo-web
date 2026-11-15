@@ -4,6 +4,8 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import PublicGallerySection from './PublicGallerySection';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-gray-950 text-white selection:bg-blue-500 selection:text-white">
