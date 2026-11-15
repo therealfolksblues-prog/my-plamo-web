@@ -17,8 +17,9 @@ export default function GarageItemView({
 }: GarageItemViewProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // 塗装・工作タグの取得（配列フィールド名の揺れに対応）
-  const rawTags = item.tags ?? item.paintTags ?? item.workTags ?? [];
+  // 制作手法・工作タグの取得（Firestoreの techniqueTags を優先）
+  const rawTags =
+    item.techniqueTags ?? item.tags ?? item.paintTags ?? item.workTags ?? [];
   const tags: string[] = Array.isArray(rawTags)
     ? rawTags
     : typeof rawTags === 'string' && rawTags.trim() !== ''
@@ -99,7 +100,7 @@ export default function GarageItemView({
           )}
         </section>
 
-        {/* --- キット情報・グレード・塗装タグ --- */}
+        {/* --- キット情報・グレード・制作手法タグ --- */}
         <section className="bg-[#1E293B] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
           {/* バッジ群（ステータス・グレード・スケール） */}
           <div className="flex flex-wrap items-center gap-2">
@@ -141,11 +142,11 @@ export default function GarageItemView({
             {item.name}
           </h1>
 
-          {/* 塗装・工作タグ一覧 */}
+          {/* 制作手法・工作タグ一覧 */}
           {tags.length > 0 && (
             <div className="space-y-2 pt-1">
               <p className="text-xs font-bold text-gray-400 tracking-wider">
-                塗装・工作タグ
+                制作手法・工作タグ
               </p>
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag, index) => (
