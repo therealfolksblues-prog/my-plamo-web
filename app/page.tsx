@@ -100,10 +100,6 @@ export default function Home() {
         </div>
       </section>
 
-      <Suspense fallback={<div className="py-12 text-center text-xs text-gray-500">公開作品を読み込み中...</div>}>
-        <PublicGallerySection />
-      </Suspense>
-
       {/* 主な機能（Features）セクション */}
       <section className="py-20 bg-gray-900/50 border-t border-b border-gray-800/80">
         <div className="max-w-6xl mx-auto px-6 space-y-12">
@@ -155,6 +151,10 @@ export default function Home() {
 
         </div>
       </section>
+
+      <Suspense fallback={<div className="py-12 text-center text-xs text-gray-500">公開作品を読み込み中...</div>}>
+        <PublicGallerySection />
+      </Suspense>
 
       {/* フッター */}
       <footer className="max-w-6xl mx-auto px-6 py-12 border-t border-gray-800/80 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
