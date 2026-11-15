@@ -6,8 +6,8 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import Image from 'next/image';
 import Link from 'next/link';
+import PortfolioGallery, { SerializedGarageItem } from './PortfolioGallery';
 
-// Firebase初期化（環境変数を使用）
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -28,7 +28,6 @@ interface PageProps {
   }>;
 }
 
-// ユーザー情報取得をキャッシュ化（generateMetadata と本体での二重クエリを防止）
 const getUserBySlug = cache(async (userSlug: string) => {
   if (!userSlug) return null;
 
@@ -47,7 +46,6 @@ const getUserBySlug = cache(async (userSlug: string) => {
   };
 });
 
-// 動的OGP・メタデータ生成
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { userSlug } = await params;
   const user = await getUserBySlug(userSlug);
@@ -90,7 +88,7 @@ export default async function UserProfilePage({ params }: PageProps) {
   const user = await getUserBySlug(userSlug);
 
   if (!user) {
-    notFound(); // 404ページへ
+    notFound();
   }
 
   const userId = user.id;
@@ -105,24 +103,25 @@ export default async function UserProfilePage({ params }: PageProps) {
   );
   const itemsSnapshot = await getDocs(qItems);
 
-  const items = itemsSnapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as Array<{
-    id: string;
-    name: string;
-    grade: string;
-    maker: string;
-    scale: string;
-    imageUrl: string;
-    status: string;
-    shareSlug: string;
-    viewCount?: number;
-    updatedAt?: any;
-  }>;
-
-  // 公開作品の合計閲覧数を算出
-  const totalViews = items.reduce((sum, item) => sum + (item.viewCount ?? 0), 0);
+  // Client Component へ渡せるプレーンオブジェクトに変換
+  const serializedItems: SerializedGarageItem[] = itemsSnapshot.docs.map((doc) => {
+    const data = doc.data();
+    const rawTags = data.techniqueTags ?? [];
+    return {
+      id: doc.id,
+      name: data.name || '名称未設定',
+      grade: data.grade || '',
+      maker: data.maker || '',
+      scale: data.scale || '',
+      imageUrl: data.imageUrl || '',
+      status: data.status || '',
+      shareSlug: data.shareSlug || doc.id,
+      viewCount: typeof data.viewCount === 'number' ? data.viewCount : 0,
+      techniqueTags: Array.isArray(rawTags) ? rawTags : [],
+      updatedAtMillis:
+        data.updatedAt?.toMillis?.() ?? data.createdAt?.toMillis?.() ?? 0,
+    };
+  });
 
   return (
     <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black flex flex-col">
@@ -160,122 +159,8 @@ export default async function UserProfilePage({ params }: PageProps) {
           )}
         </section>
 
-        {/* --- 作品一覧セクション --- */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-6 border-l-4 border-amber-500 pl-3">
-          <h2 className="text-lg font-bold tracking-wider">公開作品ギャラリー</h2>
-          <div className="flex items-center gap-3 text-xs text-gray-400 font-mono">
-            <span>{items.length} WORKS</span>
-            <span className="text-white/20">|</span>
-            <span className="inline-flex items-center gap-1 text-amber-400">
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              TOTAL {totalViews.toLocaleString()} VIEWS
-            </span>
-          </div>
-        </div>
-
-        {items.length === 0 ? (
-          <div className="text-center py-20 bg-[#1E293B] border border-white/5 rounded-xl text-gray-400">
-            <p>まだ公開されている作品はありません。</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {items.map((item) => (
-              <Link
-                key={item.id}
-                href={`/g/${item.shareSlug || item.id}`}
-                className="bg-[#1E293B] border border-white/5 rounded-xl overflow-hidden hover:border-amber-500/50 transition group flex flex-col"
-              >
-                <div className="aspect-square bg-[#0F172A] relative overflow-hidden">
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.name}
-                      fill
-                      unoptimized={true}
-                      className="object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">
-                      画像なし
-                    </div>
-                  )}
-                  {/* ステータスバッジ */}
-                  <span
-                    className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded shadow ${
-                      item.status === '完成'
-                        ? 'bg-emerald-600 text-white'
-                        : item.status === '制作中'
-                        ? 'bg-amber-600 text-white'
-                        : 'bg-blue-600 text-white'
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </div>
-
-                <div className="p-3 flex flex-col flex-grow justify-between">
-                  <div>
-                    {item.grade && (
-                      <span className="text-[10px] text-amber-400 font-bold">
-                        {item.grade}
-                      </span>
-                    )}
-                    <h3 className="text-xs font-bold text-white line-clamp-2 mt-0.5 leading-snug">
-                      {item.name}
-                    </h3>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-white/5 text-[10px] text-gray-400">
-                    <span className="truncate">
-                      {item.maker} {item.scale ? `• ${item.scale}` : ''}
-                    </span>
-                    <span
-                      className="inline-flex items-center gap-1 font-mono text-gray-400 flex-shrink-0"
-                      title="閲覧数"
-                    >
-                      <svg
-                        className="w-3 h-3 text-amber-400"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                        />
-                      </svg>
-                      {(item.viewCount ?? 0).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* --- フィルター付き公開作品ギャラリー --- */}
+        <PortfolioGallery items={serializedItems} />
 
       </div>
 
