@@ -30,12 +30,27 @@ interface GarageItem {
   createdAt?: any;
 }
 
+// ステータスごとの表示優先度（数値が小さいほど上位に表示）
+function getStatusPriority(status?: string): number {
+  switch (status) {
+    case '完成':
+      return 1;
+    case '制作中':
+      return 2;
+    case '積み':
+    case '積みプラ':
+    default:
+      return 3;
+  }
+}
+
 export default async function PublicGallerySection() {
   const itemsRef = collection(db, 'garage_items');
+  // 「積み」が増えても「完成」「制作中」を取りこぼさないよう取得枠を200件に確保
   const q = query(
     itemsRef,
     where('isPublic', '==', true),
-    limit(60)
+    limit(200)
   );
 
   const snapshot = await getDocs(q);
@@ -46,6 +61,14 @@ export default async function PublicGallerySection() {
       ...doc.data(),
     } as GarageItem))
     .sort((a, b) => {
+      // 1. ステータス優先順位（完成 > 制作中 > 積み）
+      const priorityA = getStatusPriority(a.status);
+      const priorityB = getStatusPriority(b.status);
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      // 2. 同じステータス内では投稿・更新が新しい順
       const timeA = a.updatedAt?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? 0;
       const timeB = b.updatedAt?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? 0;
       return timeB - timeA;
@@ -64,11 +87,11 @@ export default async function PublicGallerySection() {
             みんなの公開ガレージ
           </h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            モデラーたちが登録・製作した最新の公開キット
+            完成作品・製作中キットを中心にモデラーたちの最新ガレージを紹介
           </p>
         </div>
         <span className="text-xs text-blue-400 font-mono">
-          RECENT WORKS
+          FEATURED &amp; RECENT
         </span>
       </div>
 
