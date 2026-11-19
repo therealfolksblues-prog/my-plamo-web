@@ -74,6 +74,75 @@ interface ProductItem {
   updatedAt?: any;
 }
 
+/**
+ * ブラウザ標準の Canvas API で画像を長辺 maxSize 以下・JPEG 品質 quality にリサイズする
+ */
+function resizeImageToJpeg(
+  file: File,
+  maxSize = 1200,
+  quality = 0.8
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new window.Image();
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      let { width, height } = img;
+      if (width > maxSize || height > maxSize) {
+        if (width >= height) {
+          height = Math.round((height * maxSize) / width);
+          width = maxSize;
+        } else {
+          width = Math.round((width * maxSize) / height);
+          height = maxSize;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Canvasコンテキストの取得に失敗しました'));
+        return;
+      }
+
+      // 透過PNG等をJPEG変換する際に背景が黒くならないよう白で塗りつぶす
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('画像の圧縮変換に失敗しました'));
+          }
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('画像の読み込みに失敗しました'));
+    };
+
+    img.src = objectUrl;
+  });
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
 export default function AdminProductsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -86,6 +155,7 @@ export default function AdminProductsPage() {
   const [scale, setScale] = useState('1/144');
   const [imageUrl, setImageUrl] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [resizedBlob, setResizedBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
 
   // UI・一覧状態
@@ -175,6 +245,7 @@ export default function AdminProductsPage() {
     setScale('1/144');
     setImageUrl('');
     setImageFile(null);
+    setResizedBlob(null);
     setPreviewUrl('');
     setIsExisting(false);
     setStatusMessage(null);
@@ -191,6 +262,7 @@ export default function AdminProductsPage() {
     setFetchingJan(true);
     setStatusMessage(null);
     setImageFile(null);
+    setResizedBlob(null);
 
     try {
       const docRef = doc(db, 'products', cleanJan);
@@ -232,15 +304,30 @@ export default function AdminProductsPage() {
     }
   };
 
-  // 画像ファイル選択
-  const handleFileSelect = (file: File | undefined) => {
+  // 画像ファイル選択時に即座にリサイズ＆プレビュー生成
+  const handleFileSelect = async (file: File | undefined) => {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
       setStatusMessage({ type: 'error', text: '画像ファイルを選択してください。' });
       return;
     }
-    setImageFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+
+    try {
+      const compressed = await resizeImageToJpeg(file, 1200, 0.8);
+      setImageFile(file);
+      setResizedBlob(compressed);
+      setPreviewUrl(URL.createObjectURL(compressed));
+      setStatusMessage({
+        type: 'info',
+        text: `画像を自動リサイズしました（${formatBytes(file.size)} → ${formatBytes(compressed.size)} / 最大1200px）`,
+      });
+    } catch (err: any) {
+      console.error(err);
+      setStatusMessage({
+        type: 'error',
+        text: err?.message || '画像のリサイズ処理に失敗しました。',
+      });
+    }
   };
 
   // 保存・更新処理
@@ -262,11 +349,14 @@ export default function AdminProductsPage() {
     try {
       let finalImageUrl = imageUrl.trim();
 
-      // 新しい画像ファイルが選択されている場合は Storage へアップロード
+      // リサイズ済み画像がある場合は Storage へアップロード
       if (imageFile) {
-        const ext = imageFile.name.split('.').pop() || 'jpg';
-        const storageRef = ref(storage, `products/${cleanJan}_${Date.now()}.${ext}`);
-        await uploadBytes(storageRef, imageFile);
+        const blobToUpload =
+          resizedBlob ?? (await resizeImageToJpeg(imageFile, 1200, 0.8));
+        const storageRef = ref(storage, `products/${cleanJan}_${Date.now()}.jpg`);
+        await uploadBytes(storageRef, blobToUpload, {
+          contentType: 'image/jpeg',
+        });
         finalImageUrl = await getDownloadURL(storageRef);
       }
 
@@ -285,6 +375,7 @@ export default function AdminProductsPage() {
       setImageUrl(finalImageUrl);
       setPreviewUrl(finalImageUrl);
       setImageFile(null);
+      setResizedBlob(null);
       setIsExisting(true);
 
       setStatusMessage({
@@ -583,7 +674,7 @@ export default function AdminProductsPage() {
             {/* 画像アップロード＆プレビュー */}
             <div className="space-y-3 pt-2 border-t border-white/10">
               <label className="block text-xs font-bold text-gray-300">
-                商品パッケージ画像（アップロードまたはURL指定）
+                商品パッケージ画像（自動リサイズ・圧縮してアップロード）
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
@@ -614,9 +705,9 @@ export default function AdminProductsPage() {
                       クリックして画像を選択 / ここにドロップ
                     </span>
                     <span className="text-[11px] text-gray-400 mt-1">
-                      {imageFile
-                        ? `選択中: ${imageFile.name}`
-                        : 'JPG, PNG, WebP 対応（保存時にStorageへアップロード）'}
+                      {imageFile && resizedBlob
+                        ? `選択中: ${imageFile.name}（圧縮後 ${formatBytes(resizedBlob.size)}）`
+                        : 'JPG, PNG, WebP 対応（自動で長辺1200px・JPEG圧縮）'}
                     </span>
                     <input
                       type="file"
