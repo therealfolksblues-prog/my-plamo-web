@@ -16,8 +16,13 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
+// トップページの表示設定
+const TARGET_DISPLAY_COUNT = 12; // 合計表示件数
+const MAX_ITEMS_PER_USER = 2;   // 1ユーザーあたりの優先表示上限
+
 interface GarageItem {
   id: string;
+  userId?: string;
   name: string;
   grade?: string;
   maker?: string;
@@ -44,6 +49,19 @@ function getStatusPriority(status?: string): number {
   }
 }
 
+// 並び替え比較関数（完成 > 制作中 > 積み、同一ステータス内は更新が新しい順）
+function compareGarageItems(a: GarageItem, b: GarageItem): number {
+  const priorityA = getStatusPriority(a.status);
+  const priorityB = getStatusPriority(b.status);
+  if (priorityA !== priorityB) {
+    return priorityA - priorityB;
+  }
+
+  const timeA = a.updatedAt?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? 0;
+  const timeB = b.updatedAt?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? 0;
+  return timeB - timeA;
+}
+
 export default async function PublicGallerySection() {
   const itemsRef = collection(db, 'garage_items');
   // 「積み」が増えても「完成」「制作中」を取りこぼさないよう取得枠を200件に確保
@@ -55,25 +73,38 @@ export default async function PublicGallerySection() {
 
   const snapshot = await getDocs(q);
 
-  const items: GarageItem[] = snapshot.docs
+  const sortedAllItems: GarageItem[] = snapshot.docs
     .map((doc) => ({
       id: doc.id,
       ...doc.data(),
     } as GarageItem))
-    .sort((a, b) => {
-      // 1. ステータス優先順位（完成 > 制作中 > 積み）
-      const priorityA = getStatusPriority(a.status);
-      const priorityB = getStatusPriority(b.status);
-      if (priorityA !== priorityB) {
-        return priorityA - priorityB;
-      }
+    .sort(compareGarageItems);
 
-      // 2. 同じステータス内では投稿・更新が新しい順
-      const timeA = a.updatedAt?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? 0;
-      const timeB = b.updatedAt?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? 0;
-      return timeB - timeA;
-    })
-    .slice(0, 12);
+  // 第1パス：1ユーザーあたり MAX_ITEMS_PER_USER 件まで優先抽出
+  const selectedItems: GarageItem[] = [];
+  const overflowItems: GarageItem[] = [];
+  const userCounts = new Map<string, number>();
+
+  for (const item of sortedAllItems) {
+    const uid = item.userId || `unknown_${item.id}`;
+    const currentCount = userCounts.get(uid) ?? 0;
+
+    if (currentCount < MAX_ITEMS_PER_USER && selectedItems.length < TARGET_DISPLAY_COUNT) {
+      selectedItems.push(item);
+      userCounts.set(uid, currentCount + 1);
+    } else {
+      overflowItems.push(item);
+    }
+  }
+
+  // 第2パス：ユーザー数が少ない初期段階で12件に満たない場合のみ、残りの上位作品で枠を補完
+  if (selectedItems.length < TARGET_DISPLAY_COUNT && overflowItems.length > 0) {
+    const needed = TARGET_DISPLAY_COUNT - selectedItems.length;
+    selectedItems.push(...overflowItems.slice(0, needed));
+  }
+
+  // 補完分を含めて再度「完成 > 制作中 > 積み」の順で整列
+  const items = selectedItems.sort(compareGarageItems);
 
   if (items.length === 0) {
     return null;
