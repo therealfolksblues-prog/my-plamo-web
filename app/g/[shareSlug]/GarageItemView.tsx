@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, updateDoc, increment } from 'firebase/firestore';
+import ReactionPanel from './ReactionPanel';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -260,6 +261,18 @@ export default function GarageItemView({
             </div>
           )}
         </section>
+
+        {/* --- いいね＆褒めリアクションパネル --- */}
+        <ReactionPanel
+          itemId={item.id}
+          initialCounts={{
+            likesCount: item.likesCount ?? 0,
+            reactPaint: item.reactPaint ?? 0,
+            reactColor: item.reactColor ?? 0,
+            reactDetail: item.reactDetail ?? 0,
+            reactCheer: item.reactCheer ?? 0,
+          }}
+        />
 
         {/* --- ビルダー（作者）プロフィール＆ポートフォリオリンク --- */}
         <section className="bg-[#1E293B] border border-white/10 rounded-2xl p-6 shadow-xl">
