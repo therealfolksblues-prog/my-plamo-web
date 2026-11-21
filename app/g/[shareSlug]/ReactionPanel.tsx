@@ -62,9 +62,11 @@ export default function ReactionPanel({ itemId, initialCounts }: ReactionPanelPr
   const [pendingKey, setPendingKey] = useState<ReactionKey | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const storageKey = `ga_reactions_v2_${itemId}`;
+
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(`ga_reactions_${itemId}`);
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         setActiveKeys((prev) => ({ ...prev, ...parsed }));
@@ -72,17 +74,19 @@ export default function ReactionPanel({ itemId, initialCounts }: ReactionPanelPr
     } catch {
       // プライベートブラウズ等でlocalStorageが使えない場合は無視
     }
-  }, [itemId]);
+  }, [storageKey]);
 
   const handleToggleReaction = async (key: ReactionKey) => {
     if (pendingKey === key) return;
     setPendingKey(key);
     setErrorMessage(null);
 
-    const isCurrentlyActive = activeKeys[key];
+    const prevActive = { ...activeKeys };
+    const isCurrentlyActive = prevActive[key];
     const delta = isCurrentlyActive ? -1 : 1;
+    const nextActive = { ...prevActive, [key]: !isCurrentlyActive };
 
-    const nextActive = { ...activeKeys, [key]: !isCurrentlyActive };
+    // 画面表示を即時更新
     setActiveKeys(nextActive);
     setCounts((prev) => ({
       ...prev,
@@ -90,19 +94,21 @@ export default function ReactionPanel({ itemId, initialCounts }: ReactionPanelPr
     }));
 
     try {
-      localStorage.setItem(`ga_reactions_${itemId}`, JSON.stringify(nextActive));
-    } catch {
-      // 無視
-    }
-
-    try {
       const itemRef = doc(db, 'garage_items', itemId);
       await updateDoc(itemRef, {
         [key]: increment(delta),
       });
+
+      // Firestoreへの書き込みが成功したときだけブラウザに保存
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextActive));
+      } catch {
+        // 無視
+      }
     } catch (err: any) {
       console.error('Reaction update failed:', err);
-      setActiveKeys(activeKeys);
+      // 失敗時は画面表示を元に戻す（localStorageには保存しない）
+      setActiveKeys(prevActive);
       setCounts((prev) => ({
         ...prev,
         [key]: Math.max(0, prev[key] - delta),
