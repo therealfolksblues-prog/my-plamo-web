@@ -17,11 +17,17 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
+// cacheComponents 環境で動的ルートを許可する設定
+export const instant = false;
+
 // FirestoreのTimestamp等をClient Componentへ渡せるプレーンな値に変換
 function serializeFirestoreData(data: any): any {
   if (data === null || data === undefined) return data;
   if (typeof data?.toMillis === 'function') {
     return data.toMillis();
+  }
+  if (data instanceof Date) {
+    return data.getTime();
   }
   if (Array.isArray(data)) {
     return data.map(serializeFirestoreData);
