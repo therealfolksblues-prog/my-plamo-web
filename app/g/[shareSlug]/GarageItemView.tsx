@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, updateDoc, increment } from 'firebase/firestore';
 import ReactionPanel from './ReactionPanel';
+import CommentSection from './CommentSection';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -53,7 +54,6 @@ export default function GarageItemView({
         });
         setViewCount((prev) => prev + 1);
       } catch (error) {
-        // 権限エラー等が出ても画面表示は止めない
         console.error('Failed to increment view count:', error);
       }
     };
@@ -272,6 +272,12 @@ export default function GarageItemView({
             reactDetail: item.reactDetail ?? 0,
             reactCheer: item.reactCheer ?? 0,
           }}
+        />
+
+        {/* --- コメント欄 --- */}
+        <CommentSection
+          itemId={item.id}
+          itemOwnerId={item.userId || item.authorUid}
         />
 
         {/* --- ビルダー（作者）プロフィール＆ポートフォリオリンク --- */}
