@@ -17,9 +17,6 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
-// 常に最新のいいね数・閲覧数を取得するため動的レンダリングを指定
-export const dynamic = 'force-dynamic';
-
 // FirestoreのTimestamp等をClient Componentへ渡せるプレーンな値に変換
 function serializeFirestoreData(data: any): any {
   if (data === null || data === undefined) return data;
