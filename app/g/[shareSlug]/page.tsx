@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import { doc, getDoc, collection, query, where, getDocs, limit, getFirestore } from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { notFound } from 'next/navigation';
-// ※ GarageItemView のインポートは現在動いているパスのままにしてください
 import GarageItemView from './GarageItemView';
 
 const firebaseConfig = {
@@ -18,9 +17,28 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const db = getFirestore(app);
 
-export const instant = false;
+// 常に最新のいいね数・閲覧数を取得するため動的レンダリングを指定
+export const dynamic = 'force-dynamic';
 
-// cache() でラップすることで、generateMetadata とページ本体で重複してDB通信するのを防ぎます
+// FirestoreのTimestamp等をClient Componentへ渡せるプレーンな値に変換
+function serializeFirestoreData(data: any): any {
+  if (data === null || data === undefined) return data;
+  if (typeof data?.toMillis === 'function') {
+    return data.toMillis();
+  }
+  if (Array.isArray(data)) {
+    return data.map(serializeFirestoreData);
+  }
+  if (typeof data === 'object') {
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(data)) {
+      result[key] = serializeFirestoreData(value);
+    }
+    return result;
+  }
+  return data;
+}
+
 const getGarageData = cache(async (shareSlug: string) => {
   let item: any = null;
   let authorUid: string | null = null;
@@ -34,13 +52,13 @@ const getGarageData = cache(async (shareSlug: string) => {
 
   if (!querySnapshot.empty) {
     const docSnap = querySnapshot.docs[0];
-    item = { id: docSnap.id, ...docSnap.data() };
+    item = serializeFirestoreData({ id: docSnap.id, ...docSnap.data() });
     authorUid = item.userId || item.authorUid || null;
   } else {
     const docRef = doc(db, 'garage_items', shareSlug);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      item = { id: docSnap.id, ...docSnap.data() };
+      item = serializeFirestoreData({ id: docSnap.id, ...docSnap.data() });
       authorUid = item.userId || item.authorUid || null;
     }
   }
@@ -52,7 +70,7 @@ const getGarageData = cache(async (shareSlug: string) => {
     const userDocRef = doc(db, 'users', authorUid);
     const userDocSnap = await getDoc(userDocRef);
     if (userDocSnap.exists()) {
-      authorProfile = userDocSnap.data();
+      authorProfile = serializeFirestoreData(userDocSnap.data());
     }
   }
 
@@ -65,7 +83,6 @@ interface PageProps {
   }>;
 }
 
-// 🟢 SNSシェア時のカード情報（OGP）を動的に生成
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { shareSlug } = await params;
   const data = await getGarageData(shareSlug);
@@ -82,7 +99,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description =
     item.memo ||
     item.paintMemo ||
-    `${data.authorProfile?.displayName || 'モデラー'}さんのガンプラ作品記録`;
+    `${data.authorProfile?.nickname || data.authorProfile?.displayName || 'モデラー'}さんのガンプラ作品記録`;
 
   const photoUrls: string[] = item.photoUrls ?? (item.imageUrl ? [item.imageUrl] : []);
   const ogImage = photoUrls.length > 0 ? photoUrls[0] : undefined;

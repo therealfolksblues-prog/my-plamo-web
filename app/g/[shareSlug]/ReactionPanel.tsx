@@ -60,8 +60,8 @@ export default function ReactionPanel({ itemId, initialCounts }: ReactionPanelPr
   });
 
   const [pendingKey, setPendingKey] = useState<ReactionKey | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // ブラウザ保存済みの押下状態を読み込み
   useEffect(() => {
     try {
       const saved = localStorage.getItem(`ga_reactions_${itemId}`);
@@ -77,11 +77,11 @@ export default function ReactionPanel({ itemId, initialCounts }: ReactionPanelPr
   const handleToggleReaction = async (key: ReactionKey) => {
     if (pendingKey === key) return;
     setPendingKey(key);
+    setErrorMessage(null);
 
     const isCurrentlyActive = activeKeys[key];
     const delta = isCurrentlyActive ? -1 : 1;
 
-    // 画面表示を即時更新（オプティミスティックUI）
     const nextActive = { ...activeKeys, [key]: !isCurrentlyActive };
     setActiveKeys(nextActive);
     setCounts((prev) => ({
@@ -100,14 +100,18 @@ export default function ReactionPanel({ itemId, initialCounts }: ReactionPanelPr
       await updateDoc(itemRef, {
         [key]: increment(delta),
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Reaction update failed:', err);
-      // 失敗時は元の状態にロールバック
       setActiveKeys(activeKeys);
       setCounts((prev) => ({
         ...prev,
         [key]: Math.max(0, prev[key] - delta),
       }));
+      setErrorMessage(
+        err?.code === 'permission-denied'
+          ? 'Firestoreのセキュリティルールで更新が拒否されました'
+          : `更新エラー: ${err?.message || '通信に失敗しました'}`
+      );
     } finally {
       setPendingKey(null);
     }
@@ -181,6 +185,12 @@ export default function ReactionPanel({ itemId, initialCounts }: ReactionPanelPr
           );
         })}
       </div>
+
+      {errorMessage && (
+        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2">
+          {errorMessage}
+        </p>
+      )}
     </div>
   );
 }
