@@ -172,16 +172,6 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
     fetchComments();
   }, [itemId]);
 
-  const handleOpenInChrome = () => {
-    if (typeof window === 'undefined') return;
-    const currentUrl = window.location.href;
-    const urlWithoutProtocol = currentUrl.replace(/^https?:\/\//, '');
-    const intentUrl = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(
-      currentUrl
-    )};end`;
-    window.location.href = intentUrl;
-  };
-
   const handleCopyUrl = async () => {
     if (typeof window === 'undefined') return;
     try {
@@ -421,25 +411,16 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
             </p>
             <p className="text-xs text-gray-300 leading-relaxed">
               {isAndroid
-                ? '下のボタンから標準の Chrome ブラウザで開き直すと、そのままGoogleアカウントでログインしてコメントを投稿できます。'
-                : '画面下のコンパスアイコン（または右上のメニュー）から「Safariで開く」を選択すると、Googleアカウントでログインしてコメントを投稿できます。'}
+                ? '画面右上の「⋮（メニュー）」をタップし、「Chrome で開く」を選択すると、そのままGoogleアカウントでログインしてコメントを投稿できます。'
+                : '画面下のコンパスアイコン（または右上のメニュー）から「Safari で開く」を選択すると、Googleアカウントでログインしてコメントを投稿できます。'}
             </p>
-            <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              {isAndroid && (
-                <button
-                  type="button"
-                  onClick={handleOpenInChrome}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition cursor-pointer shadow"
-                >
-                  <span>Chromeで開いてログイン</span>
-                </button>
-              )}
+            <div className="pt-1">
               <button
                 type="button"
                 onClick={handleCopyUrl}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-gray-200 font-semibold text-xs transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition cursor-pointer shadow"
               >
-                <span>{copiedUrl ? 'URLをコピーしました' : 'ページURLをコピー'}</span>
+                <span>{copiedUrl ? 'URLをコピーしました！' : 'ページURLをコピー'}</span>
               </button>
             </div>
           </div>
