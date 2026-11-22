@@ -39,7 +39,6 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// 他コンポーネントのデフォルト初期化（firebaseapp.com）に引きずられないよう専用インスタンスを作成
 const AUTH_APP_NAME = 'gunpla-auth-app';
 const authApp = getApps().some((a) => a.name === AUTH_APP_NAME)
   ? getApp(AUTH_APP_NAME)
@@ -88,6 +87,20 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // アプリ内ブラウザ判定
+  const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const ua = navigator.userAgent || '';
+    const inApp = /Twitter|FBAN|FBAV|Instagram|Line\/|MicroMessenger/i.test(ua);
+    const android = /Android/i.test(ua);
+    setIsInAppBrowser(inApp);
+    setIsAndroid(android);
+  }, []);
 
   // ログイン状態とモデラープロフィールの監視
   useEffect(() => {
@@ -159,6 +172,27 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
     fetchComments();
   }, [itemId]);
 
+  const handleOpenInChrome = () => {
+    if (typeof window === 'undefined') return;
+    const currentUrl = window.location.href;
+    const urlWithoutProtocol = currentUrl.replace(/^https?:\/\//, '');
+    const intentUrl = `intent://${urlWithoutProtocol}#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(
+      currentUrl
+    )};end`;
+    window.location.href = intentUrl;
+  };
+
+  const handleCopyUrl = async () => {
+    if (typeof window === 'undefined') return;
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2500);
+    } catch {
+      setErrorMsg('URLのコピーに失敗しました。ブラウザのメニューからURLをコピーしてください。');
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setErrorMsg(null);
     const provider = new GoogleAuthProvider();
@@ -167,12 +201,12 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
     } catch (error: any) {
       if (error?.code === 'auth/popup-blocked') {
         setErrorMsg(
-          'ポップアップがブロックされました。Xなどのアプリ内ブラウザをご利用の場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。'
+          'ポップアップがブロックされました。ブラウザの設定でポップアップを許可するか、Chrome / Safari で開き直してください。'
         );
       } else if (error?.code !== 'auth/popup-closed-by-user') {
         console.error('Login error:', error);
         setErrorMsg(
-          `ログインに失敗しました (${error?.code || 'unknown'})。Xなどのアプリ内ブラウザをご利用の場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。`
+          `ログインに失敗しました (${error?.code || 'unknown'})。Chrome または Safari で開き直してお試しください。`
         );
       }
     }
@@ -379,41 +413,67 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
               </button>
             </div>
           </form>
-        ) : (
-          <div className="bg-[#0F172A]/70 border border-white/10 rounded-xl p-4 space-y-3">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <p className="text-xs text-gray-300">
-                コメントを投稿するにはGoogleアカウントでログインしてください
-              </p>
+        ) : isInAppBrowser ? (
+          /* アプリ内ブラウザ（X / Instagram / LINE 等）向けの外部ブラウザ誘導カード */
+          <div className="bg-[#0F172A]/90 border border-amber-500/30 rounded-xl p-4 space-y-3">
+            <p className="text-xs font-bold text-amber-400">
+              アプリ内ブラウザからはGoogleログインが制限されています
+            </p>
+            <p className="text-xs text-gray-300 leading-relaxed">
+              {isAndroid
+                ? '下のボタンから標準の Chrome ブラウザで開き直すと、そのままGoogleアカウントでログインしてコメントを投稿できます。'
+                : '画面下のコンパスアイコン（または右上のメニュー）から「Safariで開く」を選択すると、Googleアカウントでログインしてコメントを投稿できます。'}
+            </p>
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              {isAndroid && (
+                <button
+                  type="button"
+                  onClick={handleOpenInChrome}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition cursor-pointer shadow"
+                >
+                  <span>Chromeで開いてログイン</span>
+                </button>
+              )}
               <button
                 type="button"
-                onClick={handleGoogleLogin}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-xs transition cursor-pointer flex-shrink-0 shadow"
+                onClick={handleCopyUrl}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 text-gray-200 font-semibold text-xs transition cursor-pointer"
               >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"
-                  />
-                </svg>
-                <span>Googleでログイン</span>
+                <span>{copiedUrl ? 'URLをコピーしました' : 'ページURLをコピー'}</span>
               </button>
             </div>
-            <p className="text-[11px] text-gray-400">
-              ※Xなどのアプリ内ブラウザでエラーが出る場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。
+          </div>
+        ) : (
+          /* 通常ブラウザ（Chrome / Safari / PC）向けログインUI */
+          <div className="bg-[#0F172A]/70 border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-gray-300">
+              コメントを投稿するにはGoogleアカウントでログインしてください
             </p>
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-xs transition cursor-pointer flex-shrink-0 shadow"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"
+                />
+              </svg>
+              <span>Googleでログイン</span>
+            </button>
           </div>
         )}
 
