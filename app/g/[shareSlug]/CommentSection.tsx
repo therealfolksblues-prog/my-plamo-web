@@ -37,7 +37,7 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-}
+};
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
@@ -156,17 +156,19 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
 
   const handleGoogleLogin = async () => {
     setErrorMsg(null);
+    const provider = new GoogleAuthProvider();
     try {
-      const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-    } catch (err: any) {
-      console.error('Login failed:', err);
-      if (err?.code === 'auth/popup-blocked' || err?.code === 'auth/disallowed-useragent') {
+    } catch (error: any) {
+      if (error?.code === 'auth/popup-blocked') {
         setErrorMsg(
-          'Xなどのアプリ内ブラウザではログインが制限される場合があります。SafariやChromeで開いてお試しください。'
+          'ポップアップがブロックされました。Xなどのアプリ内ブラウザをご利用の場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。'
         );
-      } else if (err?.code !== 'auth/popup-closed-by-user') {
-        setErrorMsg('ログインに失敗しました。時間をおいて再度お試しください。');
+      } else if (error?.code !== 'auth/popup-closed-by-user') {
+        console.error('Login error:', error);
+        setErrorMsg(
+          'ログインに失敗しました。Xなどのアプリ内ブラウザをご利用の場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。'
+        );
       }
     }
   };
@@ -373,37 +375,39 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
             </div>
           </form>
         ) : (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#0F172A]/70 border border-white/10 rounded-xl p-4">
-            <p className="text-xs text-gray-300">
-              コメントを投稿するにはGoogleアカウントでログインしてください
-            </p>
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-xs transition cursor-pointer flex-shrink-0 shadow"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"
-                />
-              </svg>
-              <span>Googleでログイン</span>
-            </button>
+          <div className="bg-[#0F172A]/70 border border-white/10 rounded-xl p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-gray-300">
+                コメントを投稿するにはGoogleアカウントでログインしてください
+              </p>
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-gray-100 text-gray-900 font-bold text-xs transition cursor-pointer flex-shrink-0 shadow"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96z"
+                  />
+                </svg>
+                <span>Googleでログイン</span>
+              </button>
+            </div>
             <p className="text-[11px] text-gray-400">
-  ※Xなどのアプリ内ブラウザでエラーが出る場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。
+              ※Xなどのアプリ内ブラウザでエラーが出る場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。
             </p>
           </div>
         )}
