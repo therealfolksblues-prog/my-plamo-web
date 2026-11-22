@@ -33,7 +33,7 @@ export default function Home() {
           <div className="md:col-span-8 space-y-6 text-center md:text-left">
             <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 px-3 py-1 rounded-full text-blue-400 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-              Google Playにて近日公開予定
+              Google Playにて公開中！
             </div>
             
             <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-tight">
