@@ -15,17 +15,12 @@ export default function Home() {
             <span className="font-bold tracking-wider text-blue-400 text-lg">GUNPLA ARCHIVE</span>
           </div>
           <div>
-            {/* アプリ公開後にコメントアウトを解除してください
             <a
               href="#download"
               className="bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg transition-colors shadow-lg shadow-blue-600/25"
             >
               アプリをダウンロード
             </a>
-            */}
-            <span className="text-xs text-gray-400 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg">
-              リリース準備中
-            </span>
           </div>
         </div>
       </header>
@@ -52,7 +47,6 @@ export default function Home() {
               『積みプラ管理アプリ -GUNPLA ARCHIVE-』は、増え続けるガンプラの積みを整理し、あなたのパチ組みから塗装・完成までの全プロセスを美しくアーカイブするモデラー専用管理アプリです。
             </p>
 
-            {/* ダウンロードボタン（公開後にコメントアウトを外してください）
             <div id="download" className="pt-4 flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4">
               <a
                 href="https://play.google.com/store/apps/details?id=jp.gunpla_archive.app"
@@ -68,11 +62,6 @@ export default function Home() {
                   <div className="text-sm font-semibold -mt-1">手に入れよう</div>
                 </div>
               </a>
-            </div>
-            */}
-
-            <div className="pt-2 text-sm text-gray-400">
-              <p>🚀 正式リリースに向けて準備を進めております。今しばらくお待ちください。</p>
             </div>
           </div>
 
