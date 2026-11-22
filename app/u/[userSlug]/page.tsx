@@ -7,6 +7,10 @@ import { getFirestore, collection, query, where, getDocs, limit } from 'firebase
 import Image from 'next/image';
 import Link from 'next/link';
 import PortfolioGallery, { SerializedGarageItem } from './PortfolioGallery';
+import {
+  HeaderAppDownloadButton,
+  AppDownloadBanner,
+} from '@/components/AppDownloadBanner';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -125,8 +129,20 @@ export default async function UserProfilePage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black flex flex-col">
-      <div className="max-w-4xl w-full mx-auto px-4 py-12 flex-grow">
-        
+      {/* ヘッダー（個別作品ページとデザイン統一） */}
+      <header className="border-b border-white/10 bg-[#0F172A]/80 backdrop-blur sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
+          <Link
+            href="/"
+            className="font-bold tracking-wider text-amber-400 text-sm hover:opacity-80 transition truncate"
+          >
+            GUNPLA ARCHIVE
+          </Link>
+          <HeaderAppDownloadButton />
+        </div>
+      </header>
+
+      <div className="max-w-4xl w-full mx-auto px-4 pt-8 pb-16 flex-grow">
         {/* --- プロフィールヘッダー --- */}
         <section className="bg-[#1E293B] border border-white/5 rounded-2xl p-8 mb-10 flex flex-col items-center text-center shadow-xl">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-[#0F172A] border-2 border-amber-500 mb-4 relative">
@@ -162,6 +178,10 @@ export default async function UserProfilePage({ params }: PageProps) {
         {/* --- フィルター付き公開作品ギャラリー --- */}
         <PortfolioGallery items={serializedItems} />
 
+        {/* --- アプリダウンロード導線バナー --- */}
+        <div className="mt-12">
+          <AppDownloadBanner />
+        </div>
       </div>
 
       {/* フッター */}

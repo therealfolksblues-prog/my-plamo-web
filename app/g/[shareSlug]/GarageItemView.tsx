@@ -7,6 +7,10 @@ import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, updateDoc, increment } from 'firebase/firestore';
 import ReactionPanel from './ReactionPanel';
 import CommentSection from './CommentSection';
+import {
+  HeaderAppDownloadButton,
+  AppDownloadBanner,
+} from '@/components/AppDownloadBanner';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -61,7 +65,7 @@ export default function GarageItemView({
     incrementView();
   }, [item?.id]);
 
-  // 制作手法・工作タグの取得（Firestoreの techniqueTags を優先）
+  // 制作手法・工作タグの取得
   const rawTags =
     item.techniqueTags ?? item.tags ?? item.paintTags ?? item.workTags ?? [];
   const tags: string[] = Array.isArray(rawTags)
@@ -80,21 +84,25 @@ export default function GarageItemView({
     <main className="min-h-screen bg-[#0F172A] text-white selection:bg-amber-500 selection:text-black flex flex-col">
       {/* ヘッダー */}
       <header className="border-b border-white/10 bg-[#0F172A]/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
           <Link
             href="/"
-            className="font-bold tracking-wider text-amber-400 text-sm hover:opacity-80 transition"
+            className="font-bold tracking-wider text-amber-400 text-sm hover:opacity-80 transition truncate"
           >
             GUNPLA ARCHIVE
           </Link>
-          {builderSlug && (
-            <Link
-              href={`/u/${builderSlug}`}
-              className="text-xs text-gray-300 hover:text-amber-400 transition"
-            >
-              @{builderSlug} のガレージへ &rarr;
-            </Link>
-          )}
+
+          <div className="flex items-center gap-3">
+            {builderSlug && (
+              <Link
+                href={`/u/${builderSlug}`}
+                className="hidden sm:inline text-xs text-gray-300 hover:text-amber-400 transition"
+              >
+                @{builderSlug} のガレージへ &rarr;
+              </Link>
+            )}
+            <HeaderAppDownloadButton />
+          </div>
         </div>
       </header>
 
@@ -146,7 +154,7 @@ export default function GarageItemView({
 
         {/* --- キット情報・グレード・制作手法タグ --- */}
         <section className="bg-[#1E293B] border border-white/10 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl">
-          {/* バッジ群（ステータス・グレード・スケール ＋ 右端に閲覧数） */}
+          {/* バッジ群 */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
               {item.status && (
@@ -333,6 +341,9 @@ export default function GarageItemView({
             </div>
           )}
         </section>
+
+        {/* --- アプリダウンロード導線バナー --- */}
+        <AppDownloadBanner />
       </div>
 
       {/* フッター */}
