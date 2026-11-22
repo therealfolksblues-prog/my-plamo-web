@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     remotePatterns: [
       {
@@ -10,13 +9,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  const nextConfig: NextConfig = {
-  // 既存の設定（images など）があればそのまま残してください
   async rewrites() {
     return [
       {
-        source: '/__/auth/:path*',
-        destination: 'https://my-plamo-app-dev.firebaseapp.com/__/auth/:path*',
+        source: "/__/auth/:path*",
+        destination: "https://my-plamo-app-dev.firebaseapp.com/__/auth/:path*",
       },
     ];
   },
