@@ -28,12 +28,16 @@ import {
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  authDomain:
+    typeof window !== 'undefined' &&
+    window.location.hostname.endsWith('gunpla-archive.jp')
+      ? window.location.hostname
+      : process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+}
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
 const auth = getAuth(app);
@@ -398,6 +402,9 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
               </svg>
               <span>Googleでログイン</span>
             </button>
+            <p className="text-[11px] text-gray-400">
+  ※Xなどのアプリ内ブラウザでエラーが出る場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。
+            </p>
           </div>
         )}
 
