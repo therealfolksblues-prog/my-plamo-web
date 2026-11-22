@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
   GoogleAuthProvider,
@@ -39,9 +39,14 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApps()[0];
-const auth = getAuth(app);
-const db = getFirestore(app);
+// 他コンポーネントのデフォルト初期化（firebaseapp.com）に引きずられないよう専用インスタンスを作成
+const AUTH_APP_NAME = 'gunpla-auth-app';
+const authApp = getApps().some((a) => a.name === AUTH_APP_NAME)
+  ? getApp(AUTH_APP_NAME)
+  : initializeApp(firebaseConfig, AUTH_APP_NAME);
+
+const auth = getAuth(authApp);
+const db = getFirestore(authApp);
 
 interface CommentItem {
   id: string;
@@ -167,7 +172,7 @@ export default function CommentSection({ itemId, itemOwnerId }: CommentSectionPr
       } else if (error?.code !== 'auth/popup-closed-by-user') {
         console.error('Login error:', error);
         setErrorMsg(
-          'ログインに失敗しました。Xなどのアプリ内ブラウザをご利用の場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。'
+          `ログインに失敗しました (${error?.code || 'unknown'})。Xなどのアプリ内ブラウザをご利用の場合は、右上のメニューから「Chrome / Safariで開く」をお試しください。`
         );
       }
     }
