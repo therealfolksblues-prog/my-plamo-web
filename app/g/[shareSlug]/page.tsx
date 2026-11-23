@@ -31,6 +31,20 @@ const db = getFirestore(app);
 // cacheComponents 環境で動的ルートを許可する設定
 export const instant = false;
 
+// X（旧Twitter）のリンク解析でURL末尾に混入した不可視文字や記号を除去
+function normalizeShareSlug(rawSlug: string): string {
+  let decoded = rawSlug;
+  try {
+    decoded = decodeURIComponent(rawSlug);
+  } catch {
+    decoded = rawSlug;
+  }
+  return decoded
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+$/g, '');
+}
+
 // FirestoreのTimestamp等をClient Componentへ渡せるプレーンな値に変換
 function serializeFirestoreData(data: any): any {
   if (data === null || data === undefined) return data;
@@ -57,7 +71,10 @@ function computeShortHash(docId: string): string {
   return crypto.createHash('sha256').update(docId).digest('hex').slice(0, 6);
 }
 
-const getGarageData = cache(async (shareSlug: string) => {
+const getGarageData = cache(async (rawSlug: string) => {
+  const shareSlug = normalizeShareSlug(rawSlug);
+  if (!shareSlug) return null;
+
   let item: any = null;
   let authorUid: string | null = null;
   let authorProfile: any = null;
@@ -142,7 +159,8 @@ interface PageProps {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { shareSlug } = await params;
+  const { shareSlug: rawSlug } = await params;
+  const shareSlug = normalizeShareSlug(rawSlug);
   const data = await getGarageData(shareSlug);
 
   if (!data || !data.item) {
@@ -182,7 +200,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ItemDetailPage({ params }: PageProps) {
-  const { shareSlug } = await params;
+  const { shareSlug: rawSlug } = await params;
+  const shareSlug = normalizeShareSlug(rawSlug);
   const data = await getGarageData(shareSlug);
 
   if (!data || !data.item) {
