@@ -28,11 +28,33 @@ interface GarageItem {
   maker?: string;
   scale?: string;
   imageUrl?: string;
+  photoUrls?: string[];
   status?: string;
   shareSlug?: string;
   viewCount?: number;
   updatedAt?: any;
   createdAt?: any;
+}
+
+// 有効なサムネイル画像URLを取得（なければ空文字を返す）
+function resolveThumbnailUrl(data: Record<string, any>): string {
+  const mainUrl = typeof data.imageUrl === 'string' ? data.imageUrl.trim() : '';
+  if (mainUrl.startsWith('http://') || mainUrl.startsWith('https://')) {
+    return mainUrl;
+  }
+
+  if (Array.isArray(data.photoUrls)) {
+    const firstValid = data.photoUrls.find(
+      (u) =>
+        typeof u === 'string' &&
+        (u.trim().startsWith('http://') || u.trim().startsWith('https://'))
+    );
+    if (firstValid) {
+      return firstValid.trim();
+    }
+  }
+
+  return '';
 }
 
 // ステータスごとの表示優先度（数値が小さいほど上位に表示）
@@ -64,7 +86,7 @@ function compareGarageItems(a: GarageItem, b: GarageItem): number {
 
 export default async function PublicGallerySection() {
   const itemsRef = collection(db, 'garage_items');
-  // 「積み」が増えても「完成」「制作中」を取りこぼさないよう取得枠を200件に確保
+  // 「積み」や画像なしデータが増えても「完成」「制作中」を取りこぼさないよう取得枠を200件に確保
   const q = query(
     itemsRef,
     where('isPublic', '==', true),
@@ -73,11 +95,17 @@ export default async function PublicGallerySection() {
 
   const snapshot = await getDocs(q);
 
+  // 画像が存在するデータのみに絞り込んでからソート
   const sortedAllItems: GarageItem[] = snapshot.docs
-    .map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    } as GarageItem))
+    .map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        imageUrl: resolveThumbnailUrl(data),
+      } as GarageItem;
+    })
+    .filter((item) => Boolean(item.imageUrl))
     .sort(compareGarageItems);
 
   // 第1パス：1ユーザーあたり MAX_ITEMS_PER_USER 件まで優先抽出
@@ -134,19 +162,13 @@ export default async function PublicGallerySection() {
             className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-blue-500/50 transition group flex flex-col"
           >
             <div className="aspect-square bg-gray-950 relative overflow-hidden">
-              {item.imageUrl ? (
-                <Image
-                  src={item.imageUrl}
-                  alt={item.name}
-                  fill
-                  unoptimized={true}
-                  className="object-cover group-hover:scale-105 transition duration-300"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">
-                  画像なし
-                </div>
-              )}
+              <Image
+                src={item.imageUrl!}
+                alt={item.name}
+                fill
+                unoptimized={true}
+                className="object-cover group-hover:scale-105 transition duration-300"
+              />
               {item.status && (
                 <span
                   className={`absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded shadow ${
