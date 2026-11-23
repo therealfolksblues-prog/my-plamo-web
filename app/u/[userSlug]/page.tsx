@@ -138,6 +138,12 @@ export default async function UserProfilePage({ params }: PageProps) {
           >
             GUNPLA ARCHIVE
           </Link>
+          <Link
+            href="/my-garage"
+            className="text-xs font-semibold text-gray-300 hover:text-amber-400 transition"
+>
+             マイガレージ管理画面
+          </Link>
           <HeaderAppDownloadButton />
         </div>
       </header>
