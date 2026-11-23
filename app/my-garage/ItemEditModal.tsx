@@ -1,5 +1,3 @@
-New-Item -ItemType Directory -Force -Path "app/my-garage" | Out-Null
-@'
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -636,4 +634,3 @@ export default function ItemEditModal({
     </div>
   );
 }
-'@ | Set-Content -Path "app/my-garage/ItemEditModal.tsx" -Encoding UTF8
