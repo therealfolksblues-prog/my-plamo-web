@@ -1,6 +1,17 @@
+// app/g/[shareSlug]/page.tsx
 import { cache } from 'react';
+import crypto from 'crypto';
 import type { Metadata } from 'next';
-import { doc, getDoc, collection, query, where, getDocs, limit, getFirestore } from 'firebase/firestore';
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  limit,
+  getFirestore,
+} from 'firebase/firestore';
 import { initializeApp, getApps } from 'firebase/app';
 import { notFound } from 'next/navigation';
 import GarageItemView from './GarageItemView';
@@ -42,10 +53,16 @@ function serializeFirestoreData(data: any): any {
   return data;
 }
 
+function computeShortHash(docId: string): string {
+  return crypto.createHash('sha256').update(docId).digest('hex').slice(0, 6);
+}
+
 const getGarageData = cache(async (shareSlug: string) => {
   let item: any = null;
   let authorUid: string | null = null;
+  let authorProfile: any = null;
 
+  // 1. shareSlug フィールドで検索
   const q = query(
     collection(db, 'garage_items'),
     where('shareSlug', '==', shareSlug),
@@ -58,6 +75,7 @@ const getGarageData = cache(async (shareSlug: string) => {
     item = serializeFirestoreData({ id: docSnap.id, ...docSnap.data() });
     authorUid = item.userId || item.authorUid || null;
   } else {
+    // 2. ドキュメントIDそのもので検索
     const docRef = doc(db, 'garage_items', shareSlug);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -66,10 +84,47 @@ const getGarageData = cache(async (shareSlug: string) => {
     }
   }
 
+  // 3. フォールバック: "<userSlug>-<6桁ハッシュ>" 形式からユーザーと作品を逆引き
+  if (!item && shareSlug.includes('-')) {
+    const lastHyphen = shareSlug.lastIndexOf('-');
+    const possibleUserSlug = shareSlug.slice(0, lastHyphen);
+    const possibleHash = shareSlug.slice(lastHyphen + 1).toLowerCase();
+
+    if (possibleUserSlug && /^[0-9a-f]{6}$/.test(possibleHash)) {
+      const userQ = query(
+        collection(db, 'users'),
+        where('userSlug', '==', possibleUserSlug),
+        limit(1)
+      );
+      const userSnap = await getDocs(userQ);
+
+      if (!userSnap.empty) {
+        const userDoc = userSnap.docs[0];
+        authorUid = userDoc.id;
+        authorProfile = serializeFirestoreData(userDoc.data());
+
+        const userItemsQ = query(
+          collection(db, 'garage_items'),
+          where('userId', '==', authorUid)
+        );
+        const userItemsSnap = await getDocs(userItemsQ);
+
+        const matchedDoc = userItemsSnap.docs.find(
+          (d) => computeShortHash(d.id) === possibleHash
+        );
+        if (matchedDoc) {
+          item = serializeFirestoreData({
+            id: matchedDoc.id,
+            ...matchedDoc.data(),
+          });
+        }
+      }
+    }
+  }
+
   if (!item) return null;
 
-  let authorProfile: any = null;
-  if (authorUid) {
+  if (authorUid && !authorProfile) {
     const userDocRef = doc(db, 'users', authorUid);
     const userDocSnap = await getDoc(userDocRef);
     if (userDocSnap.exists()) {
@@ -114,7 +169,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title,
       description,
       type: 'article',
-      url: `https://gunpla-archive.jp/g/${shareSlug}`,
+      url: `https://www.gunpla-archive.jp/g/${shareSlug}`,
       images: ogImage ? [{ url: ogImage }] : [],
     },
     twitter: {
@@ -134,7 +189,8 @@ export default async function ItemDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const photoUrls: string[] = data.item.photoUrls ?? (data.item.imageUrl ? [data.item.imageUrl] : []);
+  const photoUrls: string[] =
+    data.item.photoUrls ?? (data.item.imageUrl ? [data.item.imageUrl] : []);
 
   return (
     <GarageItemView
